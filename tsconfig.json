@@ -28,7 +28,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
-  ],
+    "**/*.mts",
+    "app/layout.jsx", "app/page.jsx", "app/api/summarize/route.js", "app/api/extract/route.ts", "app/api/cram/route.ts", "app/api/flashcards/route.js"  ],
   "exclude": ["node_modules"]
 }
