@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
+import Anthropic from '@anthropic-ai/sdk'
 
 const flashcardPrompts = {
   tired: `Create 5 simple flashcards from this content. 
@@ -21,25 +20,23 @@ const flashcardPrompts = {
             [{"question": "...", "answer": "..."}]`
 }
 
-
 export async function POST(req) {
   try {
     const { text, mood } = await req.json()
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: flashcardPrompts[mood]
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const message = await client.messages.create({
+      model: "claude-opus-4-6",
+      max_tokens: 1000,
+      system: flashcardPrompts[mood],
+      messages: [{ role: "user", content: text }]
     })
 
-    const result = await model.generateContent(text)
-    const raw = result.response.text()
-
-    // Parse the JSON Gemini returns
+    const raw = message.content[0].text
     const flashcards = JSON.parse(raw)
-
     return NextResponse.json({ flashcards })
   } catch (error) {
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
+    console.error(error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
