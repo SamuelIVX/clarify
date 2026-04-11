@@ -22,7 +22,7 @@ export async function POST(req) {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       systemInstruction: moodPrompts[mood]
     })
 
@@ -30,7 +30,8 @@ export async function POST(req) {
     const summary = result.response.text()
 
     return NextResponse.json({ summary })
-  } catch (error) {
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
+ } catch (error) {
+    console.error(error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
