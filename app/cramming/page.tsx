@@ -25,9 +25,13 @@ export default function CrammingSession() {
     const [sessionStartTime, setSessionStartTime] = useState<number>(0);
 
     useEffect(() => {
-        // Load decks from localStorage
-        const savedDecks = JSON.parse(localStorage.getItem("flashcard_decks") || "[]");
-        setDecks(savedDecks);
+        try {
+            const savedDecks = JSON.parse(localStorage.getItem("flashcard_decks") || "[]");
+            setDecks(savedDecks);
+        } catch (error) {
+            console.error('Failed to parse saved decks:', error);
+            setDecks([]);
+        }
     }, []);
 
     const handleSelectDeck = (deck: FlashcardDeck) => {
