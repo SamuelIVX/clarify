@@ -31,7 +31,7 @@ export async function POST(req) {
     const summary = message.content[0].text
     return NextResponse.json({ summary })
   } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[/api/summarize]', error)
+    return NextResponse.json({ error: 'Failed to generate summary.' }, { status: 500 })
   }
 }

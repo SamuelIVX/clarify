@@ -38,7 +38,7 @@ export async function POST(req) {
     const flashcards = JSON.parse(jsonMatch[0])
     return NextResponse.json({ flashcards })
   } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[/api/flashcards]', error)
+    return NextResponse.json({ error: 'Failed to generate flashcards.' }, { status: 500 })
   }
 }
