@@ -82,7 +82,7 @@ const moods: { value: Mood; label: string; description: string }[] = [
 export default function SummaryPage() {
   const [file, setFile] = useState<File | null>(null);
   const [mood, setMood] = useState<Mood>("curious");
-  const [loading, setLoading] = useState(false);
+  const [stage, setStage] = useState<"extracting" | "summarizing" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string>("");
   const [copied, setCopied] = useState(false);
@@ -104,7 +104,7 @@ export default function SummaryPage() {
   const handleGenerateSummary = async () => {
     if (!file) return;
 
-    setLoading(true);
+    setStage("extracting");
     setError(null);
 
     try {
@@ -116,6 +116,7 @@ export default function SummaryPage() {
       if (!extractRes.ok) throw new Error(extractData.error || "Failed to extract PDF text");
 
       // Step 2: Generate summary
+      setStage("summarizing");
       const summarizeRes = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,7 +129,7 @@ export default function SummaryPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
-      setLoading(false);
+      setStage(null);
     }
   };
 
@@ -172,6 +173,8 @@ export default function SummaryPage() {
       }
     };
 
+    const cleanInline = (value: string) => value.replace(/\*\*([^*]+)\*\*/g, "$1");
+
     // Title
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
@@ -198,20 +201,20 @@ export default function SummaryPage() {
         doc.text(trimmed.replace(/^###\s/, ""), margin, y);
         y += 16;
       } else if (/^[-•*]\s/.test(trimmed)) {
-        const text = trimmed.replace(/^[-•*]\s/, "");
+        const text = cleanInline(trimmed.replace(/^[-•*]\s/, ""));
         const wrapped = doc.splitTextToSize(`• ${text}`, maxWidth - 12);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(55, 65, 81);
         writeWrapped([...wrapped], margin + 8);
       } else if (/^\d+\.\s/.test(trimmed)) {
-        const wrapped = doc.splitTextToSize(trimmed, maxWidth - 12);
+        const wrapped = doc.splitTextToSize(cleanInline(trimmed), maxWidth - 12);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(55, 65, 81);
         writeWrapped([...wrapped], margin + 8);
       } else {
-        const clean = trimmed.replace(/\*\*([^*]+)\*\*/g, "$1");
+        const clean = cleanInline(trimmed);
         const wrapped = doc.splitTextToSize(clean, maxWidth);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
@@ -291,7 +294,7 @@ export default function SummaryPage() {
               </div>
             )}
 
-            {file && !loading && (
+            {file && !stage && (
               <>
                 <div className="mt-6">
                   <p className="text-sm font-medium text-gray-700 mb-3">How are you feeling?</p>
@@ -321,15 +324,19 @@ export default function SummaryPage() {
               </>
             )}
 
-            {loading && (
+            {stage && (
               <div className="mt-6 bg-pink-50 border border-pink-200 rounded-lg p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Loader2 className="w-6 h-6 text-pink-600 animate-spin" />
                   <p className="font-medium text-pink-900">Generating summary...</p>
                 </div>
                 <div className="space-y-2 text-sm text-pink-700">
-                  <p className="animate-pulse">⟳ Extracting text from PDF...</p>
-                  <p className="animate-pulse">⟳ Summarizing with AI...</p>
+                  <p className={stage === "extracting" ? "animate-pulse" : "opacity-50"}>
+                    {stage === "extracting" ? "⟳" : "✓"} Extracting text from PDF...
+                  </p>
+                  <p className={stage === "summarizing" ? "animate-pulse" : "opacity-30"}>
+                    {stage === "summarizing" ? "⟳" : "·"} Summarizing with AI...
+                  </p>
                 </div>
               </div>
             )}
