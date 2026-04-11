@@ -36,5 +36,6 @@ export async function POST(req) {
       code: error?.code,
       status: error?.status,
     })
+    return NextResponse.json({ error: 'Failed to generate summary.' }, { status: 500 })
   }
 }
