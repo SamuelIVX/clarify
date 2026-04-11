@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+
+export const maxDuration = 60
 // ---------------------------------------------------------------------------
 // ROUTE HANDLER: POST /api/extract
 // This route does NOT call any AI — it only pulls raw text out of a PDF.
