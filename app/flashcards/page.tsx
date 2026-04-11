@@ -31,6 +31,7 @@ interface FlashcardDeck {
 }
 
 function loadDecks(): FlashcardDeck[] {
+  if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem("flashcard_decks") || "[]"); }
   catch { return []; }
 }
@@ -365,7 +366,7 @@ export default function FlashcardsPage() {
                   {expandedDeck === deck.id ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
                 </button>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Link href="/cramming" className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">
+                  <Link href={`/cramming?deckId=${deck.id}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">
                     <BookOpen className="w-3.5 h-3.5" /> Study
                   </Link>
                   <button onClick={() => { setEditingDeck(deck); setView("edit"); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">

@@ -4,6 +4,10 @@ import Anthropic from '@anthropic-ai/sdk'
 export async function POST(req) {
   try {
     const { flashcards } = await req.json()
+    if (!Array.isArray(flashcards) || flashcards.length === 0) {
+      return NextResponse.json({ error: 'flashcards must be a non-empty array' }, { status: 400 })
+    }
+
 
     const questionsAndAnswers = flashcards
       .map(card => `Q: ${card.question}\nA: ${card.answer}`)
