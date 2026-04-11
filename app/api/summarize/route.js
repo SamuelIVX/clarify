@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import Anthropic from '@anthropic-ai/sdk'
 
 const moodPrompts = {
   tired: `Summarize this in max 5 bullet points. 
@@ -20,17 +20,17 @@ export async function POST(req) {
   try {
     const { text, mood } = await req.json()
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
-      systemInstruction: moodPrompts[mood]
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const message = await client.messages.create({
+      model: "claude-opus-4-6",
+      max_tokens: 1000,
+      system: moodPrompts[mood],
+      messages: [{ role: "user", content: text }]
     })
 
-    const result = await model.generateContent(text)
-    const summary = result.response.text()
-
+    const summary = message.content[0].text
     return NextResponse.json({ summary })
- } catch (error) {
+  } catch (error) {
     console.error(error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
