@@ -216,7 +216,7 @@ function EditDeckView({ deck, onSave, onCancel }: {
 }
 
 // ─── Chat Deck Creator ────────────────────────────────────────────────────────
-const CHAT_GREETING = "Hi! What topic would you like to create flashcards for? Tell me the subject and any detai like: the level of depth or specific areas to focus on and I'll generate a set for you.";
+const CHAT_GREETING = "Hi! What topic would you like to create flashcards for? Tell me the subject and any details like the level of depth or specific areas to focus on, and I'll generate a set for you.";
 
 function ChatDeckCreator({ onCreated }: { onCreated: (deck: FlashcardDeck) => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -298,11 +298,10 @@ function ChatDeckCreator({ onCreated }: { onCreated: (deck: FlashcardDeck) => vo
         <div className="h-72 overflow-y-auto p-4 space-y-3">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                msg.role === "user"
-                  ? "bg-indigo-600 text-white rounded-br-sm"
-                  : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm"
-              }`}>
+              <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === "user"
+                ? "bg-indigo-600 text-white rounded-br-sm"
+                : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm"
+                }`}>
                 {msg.content}
               </div>
             </div>
@@ -332,6 +331,7 @@ function ChatDeckCreator({ onCreated }: { onCreated: (deck: FlashcardDeck) => vo
           <button
             onClick={sendMessage}
             disabled={!input.trim() || isLoading}
+            aria-label="Send message"
             className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" />
@@ -481,80 +481,80 @@ function CreateDeckView({ onCreated, onCancel }: {
         {createMode === "chat" ? (
           <ChatDeckCreator onCreated={onCreated} />
         ) : (
-        <>
-        <label htmlFor="pdf-upload" className={`block border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${file ? "border-indigo-400 bg-indigo-50" : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50"}`}>
-          <input id="pdf-upload" type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" />
-          <div className="flex flex-col items-center gap-4">
-            {file ? (
+          <>
+            <label htmlFor="pdf-upload" className={`block border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${file ? "border-indigo-400 bg-indigo-50" : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50"}`}>
+              <input id="pdf-upload" type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" />
+              <div className="flex flex-col items-center gap-4">
+                {file ? (
+                  <>
+                    <FileText className="w-16 h-16 text-indigo-600" />
+                    <div>
+                      <p className="text-lg font-medium text-gray-900">{file.name}</p>
+                      <p className="text-sm text-gray-500 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-16 h-16 text-gray-400" />
+                    <div>
+                      <p className="text-lg font-medium text-gray-900">Click to upload a PDF</p>
+                      <p className="text-sm text-gray-500 mt-1">Upload your study material to generate flashcards</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </label>
+
+            {error && (
+              <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-900">{error}</p>
+              </div>
+            )}
+
+            {file && !stage && (
               <>
-                <FileText className="w-16 h-16 text-indigo-600" />
-                <div>
-                  <p className="text-lg font-medium text-gray-900">{file.name}</p>
-                  <p className="text-sm text-gray-500 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                {/* Deck name input */}
+                <div className="mt-6">
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Deck name</label>
+                  <input
+                    value={deckName}
+                    onChange={e => setDeckName(e.target.value)}
+                    placeholder="e.g. Biology Chapter 4"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-indigo-400"
+                  />
                 </div>
-              </>
-            ) : (
-              <>
-                <Upload className="w-16 h-16 text-gray-400" />
-                <div>
-                  <p className="text-lg font-medium text-gray-900">Click to upload a PDF</p>
-                  <p className="text-sm text-gray-500 mt-1">Upload your study material to generate flashcards</p>
+
+                <div className="mt-6">
+                  <p className="text-sm font-medium text-gray-700 mb-3">How are you feeling?</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {moods.map(m => (
+                      <button key={m.value} onClick={() => setMood(m.value)} className={`p-3 rounded-lg border text-left transition-all ${mood === m.value ? "border-indigo-400 bg-indigo-50" : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"}`}>
+                        <p className="font-medium text-sm text-gray-900">{m.label}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{m.description}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                <button onClick={handleGenerate} className="mt-4 w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                  <BookOpen className="w-5 h-5" /> Generate Flashcards
+                </button>
               </>
             )}
-          </div>
-        </label>
 
-        {error && (
-          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-900">{error}</p>
-          </div>
-        )}
-
-        {file && !stage && (
-          <>
-            {/* Deck name input */}
-            <div className="mt-6">
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Deck name</label>
-              <input
-                value={deckName}
-                onChange={e => setDeckName(e.target.value)}
-                placeholder="e.g. Biology Chapter 4"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-indigo-400"
-              />
-            </div>
-
-            <div className="mt-6">
-              <p className="text-sm font-medium text-gray-700 mb-3">How are you feeling?</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {moods.map(m => (
-                  <button key={m.value} onClick={() => setMood(m.value)} className={`p-3 rounded-lg border text-left transition-all ${mood === m.value ? "border-indigo-400 bg-indigo-50" : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"}`}>
-                    <p className="font-medium text-sm text-gray-900">{m.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{m.description}</p>
-                  </button>
-                ))}
+            {stage && (
+              <div className="mt-6 bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+                  <p className="font-medium text-indigo-900">Generating flashcards...</p>
+                </div>
+                <div className="space-y-2 text-sm text-indigo-700">
+                  <p className={stage === "extracting" ? "animate-pulse" : "opacity-50"}>{stage === "extracting" ? "⟳" : "✓"} Extracting text from PDF...</p>
+                  <p className={stage === "generating" ? "animate-pulse" : "opacity-30"}>{stage === "generating" ? "⟳" : "○"} Generating flashcards with AI...</p>
+                </div>
               </div>
-            </div>
-            <button onClick={handleGenerate} className="mt-4 w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
-              <BookOpen className="w-5 h-5" /> Generate Flashcards
-            </button>
+            )}
           </>
-        )}
-
-        {stage && (
-          <div className="mt-6 bg-indigo-50 border border-indigo-200 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
-              <p className="font-medium text-indigo-900">Generating flashcards...</p>
-            </div>
-            <div className="space-y-2 text-sm text-indigo-700">
-              <p className={stage === "extracting" ? "animate-pulse" : "opacity-50"}>{stage === "extracting" ? "⟳" : "✓"} Extracting text from PDF...</p>
-              <p className={stage === "generating" ? "animate-pulse" : "opacity-30"}>{stage === "generating" ? "⟳" : "○"} Generating flashcards with AI...</p>
-            </div>
-          </div>
-        )}
-        </>
         )}
       </div>
     </div>
@@ -627,56 +627,56 @@ export default function FlashcardsPage() {
           {decks.map((deck, i) => {
             const accent = deckAccentClasses[i % deckAccentClasses.length];
             return (
-            <div key={deck.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${accent.border} overflow-hidden hover:shadow-md transition-shadow`}>
-              {/* Deck Header */}
-              <div className="flex items-center gap-4 p-5">
-                <button onClick={() => setExpandedDeck(expandedDeck === deck.id ? null : deck.id)} className="flex-1 flex items-center gap-3 text-left min-w-0">
-                  <div className={`shrink-0 w-9 h-9 rounded-lg ${accent.iconBg} flex items-center justify-center`}>
-                    <BookOpen className={`w-4 h-4 ${accent.iconText}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900 truncate">{deck.name}</h3>
-                      <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${accent.badge}`}>{deck.flashcards.length} cards</span>
+              <div key={deck.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${accent.border} overflow-hidden hover:shadow-md transition-shadow`}>
+                {/* Deck Header */}
+                <div className="flex items-center gap-4 p-5">
+                  <button onClick={() => setExpandedDeck(expandedDeck === deck.id ? null : deck.id)} className="flex-1 flex items-center gap-3 text-left min-w-0">
+                    <div className={`shrink-0 w-9 h-9 rounded-lg ${accent.iconBg} flex items-center justify-center`}>
+                      <BookOpen className={`w-4 h-4 ${accent.iconText}`} />
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5" suppressHydrationWarning>Created {new Date(deck.createdAt).toLocaleDateString()}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900 truncate">{deck.name}</h3>
+                        <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${accent.badge}`}>{deck.flashcards.length} cards</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5" suppressHydrationWarning>Created {new Date(deck.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    {expandedDeck === deck.id ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
+                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link href={`/cramming?deckId=${deck.id}`} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${accent.badge} hover:opacity-80`}>
+                      <BookOpen className="w-3.5 h-3.5" /> Study
+                    </Link>
+                    <button onClick={() => { setEditingDeck(deck); setView("edit"); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setDeleteId(deck.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  {expandedDeck === deck.id ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
-                </button>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Link href={`/cramming?deckId=${deck.id}`} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${accent.badge} hover:opacity-80`}>
-                    <BookOpen className="w-3.5 h-3.5" /> Study
-                  </Link>
-                  <button onClick={() => { setEditingDeck(deck); setView("edit"); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => setDeleteId(deck.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
-              </div>
 
-              {/* Expanded Cards */}
-              {expandedDeck === deck.id && (
-                <div className="border-t border-gray-100 divide-y divide-gray-100 max-h-80 overflow-y-auto">
-                  {deck.flashcards.map((card, ci) => (
-                    <div key={card.id} className="flex gap-3 px-5 py-3">
-                      <span className={`shrink-0 w-5 h-5 rounded-full ${accent.iconBg} ${accent.iconText} text-xs font-bold flex items-center justify-center mt-0.5`}>{ci + 1}</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-1.5">
-                          <span className={`shrink-0 text-xs font-semibold uppercase tracking-wide ${accent.iconText}`}>Q</span>
-                          <p className="text-sm font-medium text-gray-900">{card.question}</p>
-                        </div>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
-                          <span className="shrink-0 text-xs font-semibold text-green-500 uppercase tracking-wide">A</span>
-                          <p className="text-sm text-gray-500">{card.answer}</p>
+                {/* Expanded Cards */}
+                {expandedDeck === deck.id && (
+                  <div className="border-t border-gray-100 divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                    {deck.flashcards.map((card, ci) => (
+                      <div key={card.id} className="flex gap-3 px-5 py-3">
+                        <span className={`shrink-0 w-5 h-5 rounded-full ${accent.iconBg} ${accent.iconText} text-xs font-bold flex items-center justify-center mt-0.5`}>{ci + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className={`shrink-0 text-xs font-semibold uppercase tracking-wide ${accent.iconText}`}>Q</span>
+                            <p className="text-sm font-medium text-gray-900">{card.question}</p>
+                          </div>
+                          <div className="flex items-baseline gap-1.5 mt-0.5">
+                            <span className="shrink-0 text-xs font-semibold text-green-500 uppercase tracking-wide">A</span>
+                            <p className="text-sm text-gray-500">{card.answer}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>

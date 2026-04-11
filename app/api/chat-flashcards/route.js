@@ -24,6 +24,10 @@ export async function POST(req) {
   try {
     const { messages } = await req.json()
 
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: 'A message is required.' }, { status: 400 })
+    }
+
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const response = await client.messages.create({
       model: 'claude-opus-4-6',
