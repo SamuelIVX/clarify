@@ -12,11 +12,13 @@ export interface FlashcardDeck {
     createdAt: number;
 }
 
-export async function analyzeWeakTopics() {
-    const provider = localStorage.getItem('ai_provider') as 'gemini';
-    const apiKey = localStorage.getItem('api_key');
-
-    if (!apiKey) {
-        throw new Error('API key not configured. Please set it in Settings.');
-    }
+export async function analyzeWeakTopics(flashcards: Flashcard[]): Promise<string[]> {
+    const res = await fetch('/api/analyze-topics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flashcards }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to analyze topics');
+    return data.topics;
 }

@@ -218,7 +218,9 @@ export default function CrammingSession() {
     // Statistics Screen
     if (showStats) {
         return (
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col h-[calc(100vh-3.5rem)]">
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto pb-4">
                 {/* Header */}
                 <div className="mb-8 text-center">
                     <div className="bg-linear-to-r from-indigo-600 to-purple-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
@@ -336,29 +338,29 @@ export default function CrammingSession() {
                     </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="space-y-4">
+                </div>{/* end scrollable content */}
+
+                {/* Action Buttons — always visible */}
+                <div className="pt-4 space-y-3 border-t border-gray-200">
                     {unknownCards.size > 0 && (
                         <button
                             onClick={handleRetryWrongCards}
-                            className="w-full bg-red-600 text-white px-6 py-4 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                            className="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
                         >
                             <RotateCcw className="w-5 h-5" />
                             Retry Wrong Cards Only ({unknownCards.size} cards)
                         </button>
                     )}
-
                     <button
                         onClick={handleReset}
-                        className="w-full bg-indigo-600 text-white px-6 py-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
                     >
                         <RotateCcw className="w-5 h-5" />
                         Retry All Cards ({selectedDeck.flashcards.length} cards)
                     </button>
-
                     <button
                         onClick={() => setSelectedDeck(null)}
-                        className="w-full border border-gray-300 px-6 py-4 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-full border border-gray-300 px-6 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                         Back to Decks
                     </button>
