@@ -3,6 +3,6 @@ export interface FeatureCardProps {
     icon: React.ReactNode;
     title: string;
     description: string;
-    bg_color: string;
-    border_color: string;
+    hover_bg: string;
+    hover_border: string;
 }

@@ -1,7 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { BookOpen, Brain, FileText, Settings as SettingsIcon } from "lucide-react";
-
-import { ChatBox } from "./ChatBox";
+import { BookOpen, Brain, FileText } from "lucide-react";
 
 export function Root() {
   const location = useLocation();
@@ -21,47 +19,33 @@ export function Root() {
               <nav className="flex gap-6">
                 <Link
                   to="/flashcards"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                    location.pathname === "/flashcards"
-                      ? "bg-indigo-100 text-indigo-700"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${location.pathname === "/flashcards"
+                    ? "bg-indigo-100 text-indigo-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
                 >
                   <BookOpen className="w-5 h-5" />
                   Flashcards
                 </Link>
                 <Link
                   to="/cramming"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                    location.pathname === "/cramming"
-                      ? "bg-indigo-100 text-indigo-700"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${location.pathname === "/cramming"
+                    ? "bg-indigo-100 text-indigo-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
                 >
                   <Brain className="w-5 h-5" />
                   Cramming
                 </Link>
                 <Link
                   to="/summary"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                    location.pathname === "/summary"
-                      ? "bg-indigo-100 text-indigo-700"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${location.pathname === "/summary"
+                    ? "bg-indigo-100 text-indigo-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
                 >
                   <FileText className="w-5 h-5" />
                   Summary
-                </Link>
-                <Link
-                  to="/settings"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                    location.pathname === "/settings"
-                      ? "bg-indigo-100 text-indigo-700"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                >
-                  <SettingsIcon className="w-5 h-5" />
-                  Settings
                 </Link>
               </nav>
             </div>
@@ -69,7 +53,6 @@ export function Root() {
         </header>
       )}
       <Outlet />
-      <ChatBox />
     </div>
   );
 }
