@@ -29,7 +29,10 @@ export async function POST(req) {
     const topics = JSON.parse(jsonMatch[0])
     return NextResponse.json({ topics })
   } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[/api/analyze-topics] request failed', {
+      name: error?.name,
+      code: error?.code,
+      status: error?.status,
+    })
   }
 }
