@@ -33,7 +33,9 @@ export async function POST(req) {
     })
 
     const raw = message.content[0].text
-    const flashcards = JSON.parse(raw)
+    const jsonMatch = raw.match(/\[[\s\S]*\]/)
+    if (!jsonMatch) throw new Error("AI response did not contain a valid JSON array")
+    const flashcards = JSON.parse(jsonMatch[0])
     return NextResponse.json({ flashcards })
   } catch (error) {
     console.error(error)
