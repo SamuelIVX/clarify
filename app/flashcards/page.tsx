@@ -1,5 +1,6 @@
 'use client'
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { deckAccentClasses } from "@/app/utils/deckAccents";
 import {
   Upload, FileText, AlertCircle, BookOpen, Loader2,
   ChevronDown, ChevronUp, Pencil, Trash2, Plus, Save, X, Check
@@ -40,6 +41,52 @@ function saveDecks(decks: FlashcardDeck[]) {
   localStorage.setItem("flashcard_decks", JSON.stringify(decks));
 }
 
+// ─── Confirm Delete Modal ──────────────────────────────────────────────────────
+function ConfirmDeleteModal({ message, onConfirm, onCancel }: {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onCancel]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/30" onClick={onCancel} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-delete-title"
+        className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-6 max-w-sm w-full mx-4"
+      >
+        <div className="flex items-start gap-3 mb-5">
+          <div className="shrink-0 w-9 h-9 rounded-full bg-red-100 flex items-center justify-center">
+            <Trash2 className="w-4 h-4 text-red-600" />
+          </div>
+          <div>
+            <p id="confirm-delete-title" className="font-semibold text-gray-900">Confirm Delete</p>
+            <p className="text-sm text-gray-500 mt-0.5">{message}</p>
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button ref={cancelRef} onClick={onCancel} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button onClick={onConfirm} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Edit Deck View ───────────────────────────────────────────────────────────
 function EditDeckView({ deck, onSave, onCancel }: {
   deck: FlashcardDeck;
@@ -73,6 +120,14 @@ function EditDeckView({ deck, onSave, onCancel }: {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {deleteId && (
+        <ConfirmDeleteModal
+          message="This card will be permanently removed from the deck."
+          onConfirm={() => deleteCard(deleteId)}
+          onCancel={() => setDeleteId(null)}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <input
@@ -130,22 +185,15 @@ function EditDeckView({ deck, onSave, onCancel }: {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 text-sm">{card.question || <span className="text-gray-400 italic">No question</span>}</p>
-                  <p className="text-gray-500 text-sm mt-0.5 truncate">{card.answer || <span className="italic">No answer</span>}</p>
+                  <p className="text-gray-500 text-sm mt-0.5">{card.answer || <span className="italic">No answer</span>}</p>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button onClick={() => setEditingId(card.id)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  {deleteId === card.id ? (
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => deleteCard(card.id)} className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors">Delete</button>
-                      <button onClick={() => setDeleteId(null)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">Cancel</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => setDeleteId(card.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <button onClick={() => setDeleteId(card.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             )}
@@ -166,6 +214,7 @@ function CreateDeckView({ onCreated, onCancel }: {
   onCancel: () => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
+  const [deckName, setDeckName] = useState("");
   const [mood, setMood] = useState<Mood>("curious");
   const [stage, setStage] = useState<"extracting" | "generating" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +224,7 @@ function CreateDeckView({ onCreated, onCancel }: {
     if (!uploaded) return;
     if (uploaded.type !== "application/pdf") { setError("Please upload a PDF file"); return; }
     setFile(uploaded);
+    setDeckName(uploaded.name.replace(".pdf", ""));
     setError(null);
   };
 
@@ -200,7 +250,7 @@ function CreateDeckView({ onCreated, onCancel }: {
 
       const newDeck: FlashcardDeck = {
         id: `deck-${Date.now()}`,
-        name: file.name.replace(".pdf", ""),
+        name: deckName.trim() || file.name.replace(".pdf", ""),
         createdAt: Date.now(),
         flashcards: flashData.flashcards.map((card: { question: string; answer: string }, i: number) => ({
           id: `${Date.now()}-${i}`,
@@ -265,6 +315,17 @@ function CreateDeckView({ onCreated, onCancel }: {
 
         {file && !stage && (
           <>
+            {/* Deck name input */}
+            <div className="mt-6">
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Deck name</label>
+              <input
+                value={deckName}
+                onChange={e => setDeckName(e.target.value)}
+                placeholder="e.g. Biology Chapter 4"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-indigo-400"
+              />
+            </div>
+
             <div className="mt-6">
               <p className="text-sm font-medium text-gray-700 mb-3">How are you feeling?</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -290,7 +351,7 @@ function CreateDeckView({ onCreated, onCancel }: {
             </div>
             <div className="space-y-2 text-sm text-indigo-700">
               <p className={stage === "extracting" ? "animate-pulse" : "opacity-50"}>{stage === "extracting" ? "⟳" : "✓"} Extracting text from PDF...</p>
-              <p className={stage === "generating" ? "animate-pulse" : "opacity-30"}>{stage === "generating" ? "⟳" : "·"} Generating flashcards with AI...</p>
+              <p className={stage === "generating" ? "animate-pulse" : "opacity-30"}>{stage === "generating" ? "⟳" : "○"} Generating flashcards with AI...</p>
             </div>
           </div>
         )}
@@ -333,6 +394,14 @@ export default function FlashcardsPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {deleteId && (
+        <ConfirmDeleteModal
+          message="This deck and all its cards will be permanently deleted."
+          onConfirm={() => handleDelete(deleteId)}
+          onCancel={() => setDeleteId(null)}
+        />
+      )}
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold text-gray-900">Flashcard Decks</h1>
@@ -354,53 +423,61 @@ export default function FlashcardsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {decks.map(deck => (
-            <div key={deck.id} className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+          {decks.map((deck, i) => {
+            const accent = deckAccentClasses[i % deckAccentClasses.length];
+            return (
+            <div key={deck.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${accent.border} overflow-hidden hover:shadow-md transition-shadow`}>
               {/* Deck Header */}
               <div className="flex items-center gap-4 p-5">
                 <button onClick={() => setExpandedDeck(expandedDeck === deck.id ? null : deck.id)} className="flex-1 flex items-center gap-3 text-left min-w-0">
+                  <div className={`shrink-0 w-9 h-9 rounded-lg ${accent.iconBg} flex items-center justify-center`}>
+                    <BookOpen className={`w-4 h-4 ${accent.iconText}`} />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">{deck.name}</h3>
-                    <p className="text-sm text-gray-500">{deck.flashcards.length} cards · Created {new Date(deck.createdAt).toLocaleDateString()}</p>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900 truncate">{deck.name}</h3>
+                      <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${accent.badge}`}>{deck.flashcards.length} cards</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5" suppressHydrationWarning>Created {new Date(deck.createdAt).toLocaleDateString()}</p>
                   </div>
                   {expandedDeck === deck.id ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
                 </button>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Link href={`/cramming?deckId=${deck.id}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">
+                  <Link href={`/cramming?deckId=${deck.id}`} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${accent.badge} hover:opacity-80`}>
                     <BookOpen className="w-3.5 h-3.5" /> Study
                   </Link>
                   <button onClick={() => { setEditingDeck(deck); setView("edit"); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                     <Pencil className="w-4 h-4" />
                   </button>
-                  {deleteId === deck.id ? (
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => handleDelete(deck.id)} className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors">Delete</button>
-                      <button onClick={() => setDeleteId(null)} className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">Cancel</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => setDeleteId(deck.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button onClick={() => setDeleteId(deck.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
               {/* Expanded Cards */}
               {expandedDeck === deck.id && (
                 <div className="border-t border-gray-100 divide-y divide-gray-100 max-h-80 overflow-y-auto">
-                  {deck.flashcards.map((card, i) => (
+                  {deck.flashcards.map((card, ci) => (
                     <div key={card.id} className="flex gap-3 px-5 py-3">
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{card.question}</p>
-                        <p className="text-sm text-gray-500 mt-0.5">{card.answer}</p>
+                      <span className={`shrink-0 w-5 h-5 rounded-full ${accent.iconBg} ${accent.iconText} text-xs font-bold flex items-center justify-center mt-0.5`}>{ci + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className={`shrink-0 text-xs font-semibold uppercase tracking-wide ${accent.iconText}`}>Q</span>
+                          <p className="text-sm font-medium text-gray-900">{card.question}</p>
+                        </div>
+                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                          <span className="shrink-0 text-xs font-semibold text-green-500 uppercase tracking-wide">A</span>
+                          <p className="text-sm text-gray-500">{card.answer}</p>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

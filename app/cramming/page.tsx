@@ -1,6 +1,7 @@
 'use client'
-import { useState, useEffect } from "react";
-import { Brain, ChevronLeft, ChevronRight, RotateCcw, Check, X, TrendingUp, TrendingDown, Target, Loader2 } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { Brain, ChevronLeft, ChevronRight, RotateCcw, Check, X, TrendingUp, TrendingDown, Target, Loader2, Pencil } from "lucide-react";
 import type { FlashcardDeck } from "@/app/utils/aiApi";
 import { analyzeWeakTopics } from "@/app/utils/aiApi";
 import {
@@ -11,8 +12,10 @@ import {
     getCardBorderClass,
     getGradeInfo,
 } from "@/app/utils/crammingHelpers";
+import { deckAccentClasses } from "@/app/utils/deckAccents";
 
-export default function CrammingSession() {
+function CrammingSession() {
+    const searchParams = useSearchParams();
     const [decks, setDecks] = useState<FlashcardDeck[]>([]);
     const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -23,16 +26,59 @@ export default function CrammingSession() {
     const [weakTopics, setWeakTopics] = useState<string[]>([]);
     const [analyzingTopics, setAnalyzingTopics] = useState(false);
     const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+    const [editingTitle, setEditingTitle] = useState(false);
+    const [titleDraft, setTitleDraft] = useState("");
 
     useEffect(() => {
         try {
-            const savedDecks = JSON.parse(localStorage.getItem("flashcard_decks") || "[]");
+            const savedDecks: FlashcardDeck[] = JSON.parse(localStorage.getItem("flashcard_decks") || "[]");
             setDecks(savedDecks);
+            const deckId = searchParams.get("deckId");
+            if (deckId) {
+                const match = savedDecks.find(d => d.id === deckId);
+                if (match) {
+                    setSelectedDeck(match);
+                    setSessionStartTime(Date.now());
+                }
+            }
         } catch (error) {
             console.error('Failed to parse saved decks:', error);
             setDecks([]);
         }
-    }, []);
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (!selectedDeck || showStats) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            switch (e.key) {
+                case "ArrowLeft":
+                case "a":
+                case "A":
+                    setShowAnswer(false);
+                    setCurrentIndex(prev => prev === 0 ? selectedDeck.flashcards.length - 1 : prev - 1);
+                    break;
+                case "ArrowRight":
+                case "d":
+                case "D":
+                    setShowAnswer(false);
+                    setCurrentIndex(prev => (prev + 1) % selectedDeck.flashcards.length);
+                    break;
+                case " ":
+                case "w":
+                case "W":
+                case "s":
+                case "S":
+                case "ArrowUp":
+                case "ArrowDown":
+                    e.preventDefault();
+                    setShowAnswer(prev => !prev);
+                    break;
+            }
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [selectedDeck, showStats]);
 
     const handleSelectDeck = (deck: FlashcardDeck) => {
         setSelectedDeck(deck);
@@ -155,6 +201,18 @@ export default function CrammingSession() {
         setSessionStartTime(Date.now());
     };
 
+    const saveDeckTitle = (newName: string) => {
+        const trimmed = newName.trim();
+        if (!trimmed || !selectedDeck) { setEditingTitle(false); return; }
+        const updated = { ...selectedDeck, name: trimmed };
+        setSelectedDeck(updated);
+        try {
+            const all: FlashcardDeck[] = JSON.parse(localStorage.getItem("flashcard_decks") || "[]");
+            localStorage.setItem("flashcard_decks", JSON.stringify(all.map(d => d.id === updated.id ? updated : d)));
+        } catch { /* ignore */ }
+        setEditingTitle(false);
+    };
+
     const currentCard = selectedDeck?.flashcards[currentIndex];
     const progress = selectedDeck
         ? ((knownCards.size + unknownCards.size) / selectedDeck.flashcards.length) * 100
@@ -170,19 +228,24 @@ export default function CrammingSession() {
 
     if (decks.length === 0) {
         return (
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="text-center">
-                    <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">No Flashcard Decks Yet</h2>
-                    <p className="text-gray-600 mb-6">
-                        Create your first deck by uploading a PDF in the Flashcards section
-                    </p>
-                    <a
-                        href="/flashcards"
-                        className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                    >
-                        Create Flashcards
-                    </a>
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
+                <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden w-full max-w-md">
+                    <div className="bg-linear-to-br from-indigo-500 to-purple-600 px-8 py-10 text-center">
+                        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
+                            <Brain className="w-8 h-8 text-white" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-white">Ready to cram?</h2>
+                        <p className="text-indigo-200 mt-2 text-sm">You need at least one flashcard deck to start a session.</p>
+                    </div>
+                    <div className="px-8 py-6 text-center">
+                        <p className="text-gray-600 text-sm mb-5">Upload a PDF in the Flashcards section and AI will generate a deck for you.</p>
+                        <a
+                            href="/flashcards"
+                            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors text-sm"
+                        >
+                            Create a Deck
+                        </a>
+                    </div>
                 </div>
             </div>
         );
@@ -190,26 +253,34 @@ export default function CrammingSession() {
 
     if (!selectedDeck) {
         return (
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold text-gray-900">Cramming Session</h1>
-                    <p className="text-gray-600 mt-2">Select a deck to start studying</p>
+                    <p className="text-gray-600 mt-2">Pick a deck and start studying</p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                    {decks.map((deck) => (
-                        <button
-                            key={deck.id}
-                            onClick={() => handleSelectDeck(deck)}
-                            className="bg-white rounded-lg shadow border border-gray-200 p-6 text-left hover:border-indigo-300 hover:shadow-lg transition-all"
-                        >
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">{deck.name}</h3>
-                            <p className="text-gray-600">{deck.flashcards.length} flashcards</p>
-                            <p className="text-sm text-gray-500 mt-2">
-                                Created {new Date(deck.createdAt).toLocaleDateString()}
-                            </p>
-                        </button>
-                    ))}
+                    {decks.map((deck, i) => {
+                        const accent = deckAccentClasses[i % deckAccentClasses.length];
+                        return (
+                            <button
+                                key={deck.id}
+                                onClick={() => handleSelectDeck(deck)}
+                                className={`group bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${accent.border} p-6 text-left hover:shadow-md hover:-translate-y-0.5 transition-all`}
+                            >
+                                <div className="flex items-start justify-between gap-3 mb-3">
+                                    <div className={`w-10 h-10 rounded-lg ${accent.iconBg} flex items-center justify-center shrink-0`}>
+                                        <Brain className={`w-5 h-5 ${accent.iconText}`} />
+                                    </div>
+                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${accent.badge}`}>
+                                        {deck.flashcards.length} cards
+                                    </span>
+                                </div>
+                                <h3 className="font-semibold text-gray-900 text-base leading-snug mb-1 group-hover:text-indigo-700 transition-colors">{deck.name}</h3>
+                                <p className="text-xs text-gray-400" suppressHydrationWarning>Created {new Date(deck.createdAt).toLocaleDateString()}</p>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         );
@@ -221,122 +292,122 @@ export default function CrammingSession() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col h-[calc(100vh-3.5rem)]">
                 {/* Scrollable content */}
                 <div className="flex-1 overflow-y-auto pb-4">
-                {/* Header */}
-                <div className="mb-8 text-center">
-                    <div className="bg-linear-to-r from-indigo-600 to-purple-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                        <Brain className="w-10 h-10 text-white" />
-                    </div>
-                    <h1 className="text-4xl font-bold text-gray-900">Session Complete!</h1>
-                    <p className="text-gray-600 mt-2">{selectedDeck.name}</p>
-                </div>
-
-                {/* Performance Summary */}
-                <div className="grid md:grid-cols-3 gap-4 mb-8">
-                    <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-600">Correct</span>
-                            <TrendingUp className="w-5 h-5 text-green-600" />
+                    {/* Header */}
+                    <div className="mb-8 text-center">
+                        <div className="bg-linear-to-r from-indigo-600 to-purple-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                            <Brain className="w-10 h-10 text-white" />
                         </div>
-                        <p className="text-3xl font-bold text-green-600">{knownCards.size}</p>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {correctPercentage}% accuracy
-                        </p>
+                        <h1 className="text-4xl font-bold text-gray-900">Session Complete!</h1>
+                        <p className="text-gray-600 mt-2">{selectedDeck.name}</p>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-600">Incorrect</span>
-                            <TrendingDown className="w-5 h-5 text-red-600" />
-                        </div>
-                        <p className="text-3xl font-bold text-red-600">{unknownCards.size}</p>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {100 - correctPercentage}% missed
-                        </p>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-600">Time Spent</span>
-                            <Target className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        <p className="text-3xl font-bold text-indigo-600">
-                            {minutes}:{seconds.toString().padStart(2, '0')}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {Math.round(sessionDuration / selectedDeck.flashcards.length)}s per card
-                        </p>
-                    </div>
-                </div>
-
-                {/* Performance Grade */}
-                {(() => {
-                    const grade = getGradeInfo(correctPercentage);
-                    return (
-                        <div className={`rounded-lg p-6 mb-8 ${grade.bg}`}>
-                            <h2 className={`text-2xl font-bold mb-2 ${grade.titleColor}`}>{grade.title}</h2>
-                            <p className={grade.textColor}>{grade.message}</p>
-                        </div>
-                    );
-                })()}
-
-                {/* Topics to Review */}
-                {unknownCards.size > 0 && (
-                    <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Target className="w-6 h-6 text-indigo-600" />
-                            Topics You Need Help With
-                        </h3>
-
-                        {analyzingTopics ? (
-                            <div className="flex items-center gap-3 text-gray-600 py-4">
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                <span>Analyzing your weak areas with AI...</span>
+                    {/* Performance Summary */}
+                    <div className="grid md:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-gray-600">Correct</span>
+                                <TrendingUp className="w-5 h-5 text-green-600" />
                             </div>
-                        ) : weakTopics.length > 0 ? (
-                            <div className="space-y-2">
-                                {weakTopics.map((topic, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg"
-                                    >
-                                        <span className="font-semibold text-amber-700">{index + 1}.</span>
-                                        <span className="text-amber-900">{topic}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-gray-600">
-                                Review the {unknownCards.size} flashcards you got wrong to improve your understanding.
+                            <p className="text-3xl font-bold text-green-600">{knownCards.size}</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {correctPercentage}% accuracy
                             </p>
-                        )}
-                    </div>
-                )}
+                        </div>
 
-                {/* Wrong Cards List */}
-                {unknownCards.size > 0 && (
-                    <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                            Flashcards You Got Wrong ({unknownCards.size})
-                        </h3>
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {selectedDeck.flashcards
-                                .filter(card => unknownCards.has(card.id))
-                                .map((card) => (
-                                    <div
-                                        key={card.id}
-                                        className="border border-red-200 rounded-lg p-4 bg-red-50"
-                                    >
-                                        <p className="font-medium text-gray-900 mb-2">
-                                            Q: {card.question}
-                                        </p>
-                                        <p className="text-gray-700 text-sm">
-                                            A: {card.answer}
-                                        </p>
-                                    </div>
-                                ))}
+                        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-gray-600">Incorrect</span>
+                                <TrendingDown className="w-5 h-5 text-red-600" />
+                            </div>
+                            <p className="text-3xl font-bold text-red-600">{unknownCards.size}</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {100 - correctPercentage}% missed
+                            </p>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-gray-600">Time Spent</span>
+                                <Target className="w-5 h-5 text-indigo-600" />
+                            </div>
+                            <p className="text-3xl font-bold text-indigo-600">
+                                {minutes}:{seconds.toString().padStart(2, '0')}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {Math.round(sessionDuration / selectedDeck.flashcards.length)}s per card
+                            </p>
                         </div>
                     </div>
-                )}
+
+                    {/* Performance Grade */}
+                    {(() => {
+                        const grade = getGradeInfo(correctPercentage);
+                        return (
+                            <div className={`rounded-lg p-6 mb-8 ${grade.bg}`}>
+                                <h2 className={`text-2xl font-bold mb-2 ${grade.titleColor}`}>{grade.title}</h2>
+                                <p className={grade.textColor}>{grade.message}</p>
+                            </div>
+                        );
+                    })()}
+
+                    {/* Topics to Review */}
+                    {unknownCards.size > 0 && (
+                        <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8">
+                            <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Target className="w-6 h-6 text-indigo-600" />
+                                Topics You Need Help With
+                            </h3>
+
+                            {analyzingTopics ? (
+                                <div className="flex items-center gap-3 text-gray-600 py-4">
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Analyzing your weak areas with AI...</span>
+                                </div>
+                            ) : weakTopics.length > 0 ? (
+                                <div className="space-y-2">
+                                    {weakTopics.map((topic, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg"
+                                        >
+                                            <span className="font-semibold text-amber-700">{index + 1}.</span>
+                                            <span className="text-amber-900">{topic}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-600">
+                                    Review the {unknownCards.size} flashcards you got wrong to improve your understanding.
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Wrong Cards List */}
+                    {unknownCards.size > 0 && (
+                        <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8">
+                            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                                Flashcards You Got Wrong ({unknownCards.size})
+                            </h3>
+                            <div className="space-y-3 max-h-96 overflow-y-auto">
+                                {selectedDeck.flashcards
+                                    .filter(card => unknownCards.has(card.id))
+                                    .map((card) => (
+                                        <div
+                                            key={card.id}
+                                            className="border border-red-200 rounded-lg p-4 bg-red-50"
+                                        >
+                                            <p className="font-medium text-gray-900 mb-2">
+                                                Q: {card.question}
+                                            </p>
+                                            <p className="text-gray-700 text-sm">
+                                                A: {card.answer}
+                                            </p>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
 
                 </div>{/* end scrollable content */}
 
@@ -370,7 +441,7 @@ export default function CrammingSession() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             {/* Header */}
             <div className="mb-8 flex items-center justify-between">
                 <div>
@@ -381,7 +452,29 @@ export default function CrammingSession() {
                         <ChevronLeft className="w-4 h-4" />
                         Back to Decks
                     </button>
-                    <h1 className="text-3xl font-bold text-gray-900">{selectedDeck.name}</h1>
+                    {editingTitle ? (
+                        <input
+                            autoFocus
+                            value={titleDraft}
+                            onChange={e => setTitleDraft(e.target.value)}
+                            onBlur={() => saveDeckTitle(titleDraft)}
+                            onKeyDown={e => {
+                                if (e.key === "Enter") saveDeckTitle(titleDraft);
+                                if (e.key === "Escape") setEditingTitle(false);
+                            }}
+                            className="text-3xl font-bold text-gray-900 bg-transparent border-b-2 border-indigo-400 focus:outline-none w-full max-w-xs"
+                        />
+                    ) : (
+                        <button
+                            onClick={() => { setTitleDraft(selectedDeck.name); setEditingTitle(true); }}
+                            className="group flex items-center gap-2 text-left"
+                        >
+                            <h1 className="text-3xl font-bold text-gray-900 border-b-2 border-dashed border-gray-300 group-hover:border-indigo-400 group-hover:text-indigo-700 transition-colors">
+                                {selectedDeck.name}
+                            </h1>
+                            <Pencil className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+                        </button>
+                    )}
                     <p className="text-gray-600 mt-1">
                         Card {currentIndex + 1} of {selectedDeck.flashcards.length}
                     </p>
@@ -456,10 +549,7 @@ export default function CrammingSession() {
             {/* Flashcard */}
             <div
                 onClick={handleFlipCard}
-                className={`bg-white rounded-2xl shadow-xl border-2 p-12 min-h-100 flex items-center justify-center cursor-pointer transition-all mb-6 ${getCardBorderClass(currentCard?.id, knownCards, unknownCards)}`}
-                style={{
-                    perspective: "1000px",
-                }}
+                className={`rounded-2xl shadow-lg border-2 p-12 min-h-56 flex items-center justify-center cursor-pointer transition-all mb-6 ${getCardBorderClass(currentCard?.id, knownCards, unknownCards)} ${showAnswer ? "bg-linear-to-br from-green-50 to-white" : "bg-linear-to-br from-indigo-50 to-white"}`}
             >
                 <div className="text-center w-full">
                     {currentCard && (knownCards.has(currentCard.id) || unknownCards.has(currentCard.id)) && (
@@ -482,15 +572,19 @@ export default function CrammingSession() {
                     )}
                     {!showAnswer ? (
                         <>
-                            <p className="text-sm text-indigo-600 font-medium mb-4">QUESTION</p>
-                            <p className="text-2xl font-semibold text-gray-900 mb-6">
+                            <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-4">Question</p>
+                            <p className="text-2xl font-semibold text-gray-900 mb-6 leading-snug">
                                 {currentCard?.question}
                             </p>
-                            <p className="text-sm text-gray-500">Click to reveal answer</p>
+                            <p className="text-sm text-gray-400 flex items-center justify-center gap-1.5">
+                                <span className="w-4 h-px bg-gray-300 inline-block" />
+                                tap to reveal
+                                <span className="w-4 h-px bg-gray-300 inline-block" />
+                            </p>
                         </>
                     ) : (
                         <>
-                            <p className="text-sm text-green-600 font-medium mb-4">ANSWER</p>
+                            <p className="text-xs font-bold text-green-500 uppercase tracking-widest mb-4">Answer</p>
                             <p className="text-xl text-gray-900 leading-relaxed">
                                 {currentCard?.answer}
                             </p>
@@ -520,17 +614,17 @@ export default function CrammingSession() {
 
             {/* Know/Don't Know Buttons */}
             {showAnswer && (
-                <div className="flex gap-4 mt-4">
+                <div className="flex gap-3 mt-4">
                     <button
                         onClick={handleMarkUnknown}
-                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
+                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-red-500 text-white rounded-xl hover:bg-red-600 active:scale-95 transition-all font-semibold shadow-sm"
                     >
                         <X className="w-5 h-5" />
                         Don&apos;t Know
                     </button>
                     <button
                         onClick={handleMarkKnown}
-                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium"
+                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-green-500 text-white rounded-xl hover:bg-green-600 active:scale-95 transition-all font-semibold shadow-sm"
                     >
                         <Check className="w-5 h-5" />
                         Know It
@@ -538,12 +632,15 @@ export default function CrammingSession() {
                 </div>
             )}
 
-            {/* Keyboard Shortcuts Hint */}
-            <div className="mt-8 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600 text-center">
-                    <strong>Tip:</strong> Click the card to flip • Use Previous/Skip to navigate
-                </p>
-            </div>
+            <p className="text-xs text-gray-400 text-center mt-5">Tap or <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">W</kbd> / <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">S</kbd> to flip · <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">A</kbd> / <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">D</kbd> or arrows to navigate</p>
         </div>
+    );
+}
+
+export default function CrammingPage() {
+    return (
+        <Suspense fallback={null}>
+            <CrammingSession />
+        </Suspense>
     );
 }
