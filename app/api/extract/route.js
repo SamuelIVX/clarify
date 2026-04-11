@@ -49,7 +49,12 @@ export async function POST(req) {
     // parsed.text contains all the extracted plain text from the entire file.
     const { PDFParse } = await import('pdf-parse')
     const parser = new PDFParse({ data: buffer })
-    const parsed = await parser.getText()
+    let parsed
+    try {
+      parsed = await parser.getText()
+    } finally {
+      await parser.destroy()
+    }
 
     // --- STEP 7: Check that we actually got text back ---
     // Scanned PDFs are just images — pdf-parse cannot extract text from them.

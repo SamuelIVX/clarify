@@ -73,10 +73,10 @@ function renderSummary(text: string) {
 type Mood = "tired" | "stressed" | "annoyed" | "curious";
 
 const moods: { value: Mood; label: string; description: string }[] = [
-  { value: "tired",    label: "😴 Tired",    description: "5 bullets, bare minimum" },
+  { value: "tired", label: "😴 Tired", description: "5 bullets, bare minimum" },
   { value: "stressed", label: "😰 Stressed", description: "Top 3 critical points" },
-  { value: "annoyed",  label: "😤 Annoyed",  description: "Blunt, no fluff" },
-  { value: "curious",  label: "🤓 Curious",  description: "Deep dive with context" },
+  { value: "annoyed", label: "😤 Annoyed", description: "Blunt, no fluff" },
+  { value: "curious", label: "🤓 Curious", description: "Deep dive with context" },
 ];
 
 export default function SummaryPage() {
@@ -154,6 +154,24 @@ export default function SummaryPage() {
       if (y + needed > doc.internal.pageSize.getHeight() - 48) addPage();
     };
 
+    const writeWrapped = (wrapped: string[], x: number, lineHeight = 14, gap = 2) => {
+      const pageBottom = doc.internal.pageSize.getHeight() - 48;
+
+      while (wrapped.length > 0) {
+        const available = Math.floor((pageBottom - y) / lineHeight);
+        if (available <= 0) {
+          addPage();
+          continue;
+        }
+
+        const chunk = wrapped.splice(0, available);
+        doc.text(chunk, x, y);
+        y += chunk.length * lineHeight + gap;
+
+        if (wrapped.length > 0) addPage();
+      }
+    };
+
     // Title
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
@@ -182,29 +200,23 @@ export default function SummaryPage() {
       } else if (/^[-•*]\s/.test(trimmed)) {
         const text = trimmed.replace(/^[-•*]\s/, "");
         const wrapped = doc.splitTextToSize(`• ${text}`, maxWidth - 12);
-        checkY(wrapped.length * 14);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(55, 65, 81);
-        doc.text(wrapped, margin + 8, y);
-        y += wrapped.length * 14 + 2;
+        writeWrapped([...wrapped], margin + 8);
       } else if (/^\d+\.\s/.test(trimmed)) {
         const wrapped = doc.splitTextToSize(trimmed, maxWidth - 12);
-        checkY(wrapped.length * 14);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(55, 65, 81);
-        doc.text(wrapped, margin + 8, y);
-        y += wrapped.length * 14 + 2;
+        writeWrapped([...wrapped], margin + 8);
       } else {
         const clean = trimmed.replace(/\*\*([^*]+)\*\*/g, "$1");
         const wrapped = doc.splitTextToSize(clean, maxWidth);
-        checkY(wrapped.length * 14);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(75, 85, 99);
-        doc.text(wrapped, margin, y);
-        y += wrapped.length * 14 + 4;
+        writeWrapped([...wrapped], margin, 14, 4);
       }
     }
 
@@ -232,11 +244,10 @@ export default function SummaryPage() {
           <div className="p-8">
             <label
               htmlFor="pdf-upload-summary"
-              className={`block border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
-                file
-                  ? "border-pink-400 bg-pink-50"
-                  : "border-gray-300 hover:border-pink-400 hover:bg-gray-50"
-              }`}
+              className={`block border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${file
+                ? "border-pink-400 bg-pink-50"
+                : "border-gray-300 hover:border-pink-400 hover:bg-gray-50"
+                }`}
             >
               <input
                 id="pdf-upload-summary"
@@ -289,11 +300,10 @@ export default function SummaryPage() {
                       <button
                         key={m.value}
                         onClick={() => setMood(m.value)}
-                        className={`p-3 rounded-lg border text-left transition-all ${
-                          mood === m.value
-                            ? "border-pink-400 bg-pink-50"
-                            : "border-gray-200 hover:border-pink-300 hover:bg-gray-50"
-                        }`}
+                        className={`p-3 rounded-lg border text-left transition-all ${mood === m.value
+                          ? "border-pink-400 bg-pink-50"
+                          : "border-gray-200 hover:border-pink-300 hover:bg-gray-50"
+                          }`}
                       >
                         <p className="font-medium text-sm text-gray-900">{m.label}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{m.description}</p>
