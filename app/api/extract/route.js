@@ -1,7 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createRequire } from 'module'
-const require = createRequire(import.meta.url)
-const pdfParse = require('pdf-parse')
 // ---------------------------------------------------------------------------
 // ROUTE HANDLER: POST /api/extract
 // This route does NOT call any AI — it only pulls raw text out of a PDF.
@@ -48,9 +45,11 @@ export async function POST(req) {
     const buffer = Buffer.from(await file.arrayBuffer())
 
     // --- STEP 6: Extract the text using pdf-parse ---
-    // pdfParse() reads every page of the PDF and returns an object.
+    // v2 API: instantiate PDFParse with the buffer, then call getText().
     // parsed.text contains all the extracted plain text from the entire file.
-    const parsed = await pdfParse(buffer)
+    const { PDFParse } = await import('pdf-parse')
+    const parser = new PDFParse({ data: buffer })
+    const parsed = await parser.getText()
 
     // --- STEP 7: Check that we actually got text back ---
     // Scanned PDFs are just images — pdf-parse cannot extract text from them.

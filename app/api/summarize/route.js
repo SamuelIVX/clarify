@@ -2,17 +2,17 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
 const moodPrompts = {
-  tired: `Summarize this in max 5 bullet points. 
-          Each bullet under 10 words. 
+  tired: `Summarize the provided document in max 5 bullet points.
+          Each bullet under 10 words.
           Add one funny analogy at the end.`,
 
-  stressed: `Give me ONLY the 3 most important points.
+  stressed: `Summarize the provided document. Give ONLY the 3 most important points.
              Number them. Nothing else. Be calm.`,
 
-  annoyed: `Be blunt. No fluff. Tell me what I need 
-            to know in the fewest words possible.`,
+  annoyed: `Summarize the provided document. Be blunt. No fluff. No intro. No outro.
+            Only the essential points in the fewest words possible.`,
 
-  curious: `Give a thorough summary with key insights,
+  curious: `Summarize the provided document with thorough coverage of key insights,
             interesting details, and real world context.`
 }
 
@@ -25,7 +25,7 @@ export async function POST(req) {
       model: "claude-opus-4-6",
       max_tokens: 1000,
       system: moodPrompts[mood],
-      messages: [{ role: "user", content: text }]
+      messages: [{ role: "user", content: `Summarize this document:\n\n${text.slice(0, 20000)}` }]
     })
 
     const summary = message.content[0].text

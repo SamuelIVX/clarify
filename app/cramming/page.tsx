@@ -454,7 +454,7 @@ export default function CrammingSession() {
             {/* Flashcard */}
             <div
                 onClick={handleFlipCard}
-                className={`bg-white rounded-2xl shadow-xl border-2 p-12 min-h-[400px] flex items-center justify-center cursor-pointer transition-all mb-6 ${getCardBorderClass(currentCard?.id, knownCards, unknownCards)}`}
+                className={`bg-white rounded-2xl shadow-xl border-2 p-12 min-h-100 flex items-center justify-center cursor-pointer transition-all mb-6 ${getCardBorderClass(currentCard?.id, knownCards, unknownCards)}`}
                 style={{
                     perspective: "1000px",
                 }}
