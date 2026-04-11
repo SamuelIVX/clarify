@@ -1,3 +1,4 @@
+'use client'
 import Link from "next/link";
 import { BookOpen, Brain, FileText } from "lucide-react";
 import { FeatureCardProps } from "./types";
