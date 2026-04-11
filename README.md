@@ -1,39 +1,220 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clarify
+
+An AI-powered study assistant that transforms PDFs into personalized learning experiences. Upload a document, pick your mood, and Clarify generates flashcards, cramming sessions, or summaries, all powered by Claude.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TD
+    User(["👤 User"])
+
+    subgraph Client["Browser (Next.js Client Components)"]
+        Home["/ Home Page"]
+        FC["📚 /flashcards\nCreate & manage decks"]
+        CR["🧠 /cramming\nInteractive study session"]
+        SM["📄 /summary\nAI document summary"]
+        LS[("💾 localStorage\nFlashcard decks")]
+    end
+
+    subgraph Server["Next.js API Routes (Server)"]
+        EX["/api/extract\nPDF → Text\n(unpdf)"]
+        FL["/api/flashcards\nText → Flashcards\n(Claude Opus 4.6)"]
+        SU["/api/summarize\nText → Summary\n(Claude Opus 4.6)"]
+        AT["/api/analyze-topics\nWrong cards → Weak topics\n(Claude Haiku 4.5)"]
+    end
+
+    subgraph Anthropic["Anthropic API"]
+        OP["Claude Opus 4.6\nFlashcard & Summary generation"]
+        HK["Claude Haiku 4.5\nWeak topic analysis"]
+    end
+
+    PDF[["📎 PDF File"]]
+
+    User --> Home
+    Home --> FC & CR & SM
+
+    FC -->|"Upload PDF"| PDF
+    SM -->|"Upload PDF"| PDF
+
+    PDF -->|"POST /api/extract"| EX
+    EX -->|"Extracted text"| FL
+    EX -->|"Extracted text"| SU
+
+    FL -->|"POST /api/flashcards"| OP
+    SU -->|"POST /api/summarize"| OP
+    AT -->|"POST /api/analyze-topics"| HK
+
+    OP -->|"Flashcard JSON"| FC
+    OP -->|"Summary markdown"| SM
+    HK -->|"Topic strings"| CR
+
+    FC -->|"Save decks"| LS
+    LS -->|"Load decks"| CR
+
+    CR -->|"Session complete\n(wrong cards)"| AT
+```
+
+---
+
+## Features
+
+### Flashcard Decks
+- Upload any PDF and generate flashcards instantly
+- Choose a **mood** to control depth and quantity:
+
+  | Mood | Cards | Style |
+  |------|-------|-------|
+  | 😴 Tired | 5 | Short & simple |
+  | 😰 Stressed | 3 | Critical points only |
+  | 😤 Annoyed | 5 | Blunt, no fluff |
+  | 🤓 Curious | 10 | Deep & detailed |
+
+- Name decks, expand to preview cards inline, edit individual Q&A pairs
+- Add and delete cards manually
+- All decks persisted in `localStorage`
+
+### Cramming Sessions
+- Pick any saved deck and start studying immediately
+- Flip cards by clicking or keyboard (`W` / `S` / `Space` / `↑` / `↓`)
+- Navigate with `A` / `D` or arrow keys
+- Mark each card **Know It** or **Don't Know**
+- Real-time progress bar showing known / unknown / unreviewed counts
+- Session statistics on completion:
+  - Accuracy percentage and performance grade
+  - Time spent total and per card
+  - AI-identified weak topics from missed cards
+  - Full list of cards you got wrong
+- Retry only the wrong cards, or reset and go again
+- Rename the deck inline during a session
+
+### AI Summaries
+- Upload a PDF and receive a mood-tailored summary:
+
+  | Mood | Style |
+  |------|-------|
+  | 😴 Tired | 5 bullets, ≤ 10 words each + funny analogy |
+  | 😰 Stressed | 3 numbered critical points, calm tone |
+  | 😤 Annoyed | Blunt, no intro, fewest words possible |
+  | 🤓 Curious | Deep dive with insights and real-world context |
+
+- Rendered markdown with styled headings, bullets, and inline bold
+- Copy to clipboard or download as a formatted PDF
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | [Next.js 16](https://nextjs.org/) (App Router) |
+| Language | TypeScript 5 (strict mode) |
+| Styling | Tailwind CSS v4 |
+| UI Components | shadcn/ui + Base UI + Lucide React |
+| AI | [Anthropic Claude](https://anthropic.com) (Opus 4.6 + Haiku 4.5) |
+| PDF Extraction | [unpdf](https://github.com/unjs/unpdf) |
+| PDF Export | jsPDF |
+| Fonts | Geist Sans + Geist Mono (next/font) |
+| Storage | Browser localStorage |
+| Deployment | Vercel |
+
+---
+
+## Project Structure
+
+```bash
+clarify/
+├── app/
+│   ├── api/
+│   │   ├── analyze-topics/route.js   # Identifies weak topics from wrong cards
+│   │   ├── extract/route.js          # PDF → plain text (unpdf)
+│   │   ├── flashcards/route.js       # Text → flashcard JSON (Claude Opus)
+│   │   └── summarize/route.js        # Text → summary markdown (Claude Opus)
+│   ├── cramming/
+│   │   └── page.tsx                  # Interactive study session
+│   ├── flashcards/
+│   │   └── page.tsx                  # Deck management + creation
+│   ├── summary/
+│   │   └── page.tsx                  # PDF summarization
+│   ├── utils/
+│   │   ├── aiApi.ts                  # Client-side API helpers + shared types
+│   │   ├── crammingHelpers.ts        # Pure session logic helpers
+│   │   └── deckAccents.ts            # Shared deck color accent classes
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx                      # Landing page
+├── components/
+│   └── Navbar.tsx                    # Sticky nav, hidden on home page
+├── .env.local.example
+├── next.config.ts
+└── package.json
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- An [Anthropic API key](https://console.anthropic.com/)
+
+### Installation
+
+```bash
+git clone https://github.com/SamuelIVX/clarify.git
+cd clarify
+npm install
+```
+
+### Environment Variables
+
+Copy the example file and add your key:
+
+```bash
+cp .env.local.example .env.local
+```
+
+```env
+# .env.local
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
+
+### Run Locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The app is deployed on [Vercel](https://vercel.com). To deploy your own:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Push to `main` — Vercel auto-deploys on every push when connected to GitHub.
+2. Add `ANTHROPIC_API_KEY` in your Vercel project under **Settings → Environment Variables**.
 
-## Deploy on Vercel
+> The `/api/extract` route sets `maxDuration = 60` to handle large PDFs within Vercel's serverless timeout.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# clarify
-# clarify
-# clarify
+## API Routes
+
+| Route | Method | Input | Output | Model |
+|-------|--------|-------|--------|-------|
+| `/api/extract` | POST | `FormData { pdf: File }` | `{ text: string }` | — (unpdf) |
+| `/api/flashcards` | POST | `{ text, mood }` | `{ flashcards: [{question, answer}] }` | Claude Opus 4.6 |
+| `/api/summarize` | POST | `{ text, mood }` | `{ summary: string }` | Claude Opus 4.6 |
+| `/api/analyze-topics` | POST | `{ flashcards: Flashcard[] }` | `{ topics: string[] }` | Claude Haiku 4.5 |
+
+All routes run server-side only. `ANTHROPIC_API_KEY` is never exposed to the client.
