@@ -1,5 +1,6 @@
 'use client'
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { deckAccentClasses } from "@/app/utils/deckAccents";
 import {
   Upload, FileText, AlertCircle, BookOpen, Loader2,
   ChevronDown, ChevronUp, Pencil, Trash2, Plus, Save, X, Check
@@ -46,21 +47,35 @@ function ConfirmDeleteModal({ message, onConfirm, onCancel }: {
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onCancel]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30" onClick={onCancel} />
-      <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-6 max-w-sm w-full mx-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-delete-title"
+        className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-6 max-w-sm w-full mx-4"
+      >
         <div className="flex items-start gap-3 mb-5">
           <div className="shrink-0 w-9 h-9 rounded-full bg-red-100 flex items-center justify-center">
             <Trash2 className="w-4 h-4 text-red-600" />
           </div>
           <div>
-            <p className="font-semibold text-gray-900">Confirm Delete</p>
+            <p id="confirm-delete-title" className="font-semibold text-gray-900">Confirm Delete</p>
             <p className="text-sm text-gray-500 mt-0.5">{message}</p>
           </div>
         </div>
         <div className="flex gap-2 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+          <button ref={cancelRef} onClick={onCancel} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
             Cancel
           </button>
           <button onClick={onConfirm} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
@@ -376,14 +391,6 @@ export default function FlashcardsPage() {
 
   if (view === "create") return <CreateDeckView onCreated={handleCreated} onCancel={() => setView("list")} />;
   if (view === "edit" && editingDeck) return <EditDeckView deck={editingDeck} onSave={handleSaveEdit} onCancel={() => { setView("list"); setEditingDeck(null); }} />;
-
-  const deckAccentClasses = [
-    { border: "border-l-indigo-400", iconBg: "bg-indigo-100", iconText: "text-indigo-600", badge: "bg-indigo-50 text-indigo-700" },
-    { border: "border-l-violet-400", iconBg: "bg-violet-100", iconText: "text-violet-600", badge: "bg-violet-50 text-violet-700" },
-    { border: "border-l-purple-400", iconBg: "bg-purple-100", iconText: "text-purple-600", badge: "bg-purple-50 text-purple-700" },
-    { border: "border-l-blue-400",   iconBg: "bg-blue-100",   iconText: "text-blue-600",   badge: "bg-blue-50 text-blue-700"   },
-    { border: "border-l-cyan-400",   iconBg: "bg-cyan-100",   iconText: "text-cyan-600",   badge: "bg-cyan-50 text-cyan-700"   },
-  ];
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

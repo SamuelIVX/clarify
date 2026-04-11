@@ -1,7 +1,7 @@
 'use client'
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Brain, ChevronLeft, ChevronRight, RotateCcw, Check, X, TrendingUp, TrendingDown, Target, Loader2 } from "lucide-react";
+import { Brain, ChevronLeft, ChevronRight, RotateCcw, Check, X, TrendingUp, TrendingDown, Target, Loader2, Pencil } from "lucide-react";
 import type { FlashcardDeck } from "@/app/utils/aiApi";
 import { analyzeWeakTopics } from "@/app/utils/aiApi";
 import {
@@ -12,8 +12,9 @@ import {
     getCardBorderClass,
     getGradeInfo,
 } from "@/app/utils/crammingHelpers";
+import { deckAccentClasses } from "@/app/utils/deckAccents";
 
-export default function CrammingSession() {
+function CrammingSession() {
     const searchParams = useSearchParams();
     const [decks, setDecks] = useState<FlashcardDeck[]>([]);
     const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
@@ -25,6 +26,8 @@ export default function CrammingSession() {
     const [weakTopics, setWeakTopics] = useState<string[]>([]);
     const [analyzingTopics, setAnalyzingTopics] = useState(false);
     const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+    const [editingTitle, setEditingTitle] = useState(false);
+    const [titleDraft, setTitleDraft] = useState("");
 
     useEffect(() => {
         try {
@@ -43,6 +46,39 @@ export default function CrammingSession() {
             setDecks([]);
         }
     }, [searchParams]);
+
+    useEffect(() => {
+        if (!selectedDeck || showStats) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            switch (e.key) {
+                case "ArrowLeft":
+                case "a":
+                case "A":
+                    setShowAnswer(false);
+                    setCurrentIndex(prev => prev === 0 ? selectedDeck.flashcards.length - 1 : prev - 1);
+                    break;
+                case "ArrowRight":
+                case "d":
+                case "D":
+                    setShowAnswer(false);
+                    setCurrentIndex(prev => (prev + 1) % selectedDeck.flashcards.length);
+                    break;
+                case " ":
+                case "w":
+                case "W":
+                case "s":
+                case "S":
+                case "ArrowUp":
+                case "ArrowDown":
+                    e.preventDefault();
+                    setShowAnswer(prev => !prev);
+                    break;
+            }
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [selectedDeck, showStats]);
 
     const handleSelectDeck = (deck: FlashcardDeck) => {
         setSelectedDeck(deck);
@@ -165,6 +201,18 @@ export default function CrammingSession() {
         setSessionStartTime(Date.now());
     };
 
+    const saveDeckTitle = (newName: string) => {
+        const trimmed = newName.trim();
+        if (!trimmed || !selectedDeck) { setEditingTitle(false); return; }
+        const updated = { ...selectedDeck, name: trimmed };
+        setSelectedDeck(updated);
+        try {
+            const all: FlashcardDeck[] = JSON.parse(localStorage.getItem("flashcard_decks") || "[]");
+            localStorage.setItem("flashcard_decks", JSON.stringify(all.map(d => d.id === updated.id ? updated : d)));
+        } catch { /* ignore */ }
+        setEditingTitle(false);
+    };
+
     const currentCard = selectedDeck?.flashcards[currentIndex];
     const progress = selectedDeck
         ? ((knownCards.size + unknownCards.size) / selectedDeck.flashcards.length) * 100
@@ -202,14 +250,6 @@ export default function CrammingSession() {
             </div>
         );
     }
-
-    const deckAccentClasses = [
-        { border: "border-l-indigo-400", iconBg: "bg-indigo-100", iconText: "text-indigo-600", badge: "bg-indigo-50 text-indigo-700" },
-        { border: "border-l-violet-400", iconBg: "bg-violet-100", iconText: "text-violet-600", badge: "bg-violet-50 text-violet-700" },
-        { border: "border-l-purple-400", iconBg: "bg-purple-100", iconText: "text-purple-600", badge: "bg-purple-50 text-purple-700" },
-        { border: "border-l-blue-400", iconBg: "bg-blue-100", iconText: "text-blue-600", badge: "bg-blue-50 text-blue-700" },
-        { border: "border-l-cyan-400", iconBg: "bg-cyan-100", iconText: "text-cyan-600", badge: "bg-cyan-50 text-cyan-700" },
-    ];
 
     if (!selectedDeck) {
         return (
@@ -412,7 +452,29 @@ export default function CrammingSession() {
                         <ChevronLeft className="w-4 h-4" />
                         Back to Decks
                     </button>
-                    <h1 className="text-3xl font-bold text-gray-900">{selectedDeck.name}</h1>
+                    {editingTitle ? (
+                        <input
+                            autoFocus
+                            value={titleDraft}
+                            onChange={e => setTitleDraft(e.target.value)}
+                            onBlur={() => saveDeckTitle(titleDraft)}
+                            onKeyDown={e => {
+                                if (e.key === "Enter") saveDeckTitle(titleDraft);
+                                if (e.key === "Escape") setEditingTitle(false);
+                            }}
+                            className="text-3xl font-bold text-gray-900 bg-transparent border-b-2 border-indigo-400 focus:outline-none w-full max-w-xs"
+                        />
+                    ) : (
+                        <button
+                            onClick={() => { setTitleDraft(selectedDeck.name); setEditingTitle(true); }}
+                            className="group flex items-center gap-2 text-left"
+                        >
+                            <h1 className="text-3xl font-bold text-gray-900 border-b-2 border-dashed border-gray-300 group-hover:border-indigo-400 group-hover:text-indigo-700 transition-colors">
+                                {selectedDeck.name}
+                            </h1>
+                            <Pencil className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+                        </button>
+                    )}
                     <p className="text-gray-600 mt-1">
                         Card {currentIndex + 1} of {selectedDeck.flashcards.length}
                     </p>
@@ -570,7 +632,15 @@ export default function CrammingSession() {
                 </div>
             )}
 
-            <p className="text-xs text-gray-400 text-center mt-5">Tap the card to flip • Use Previous/Skip to navigate</p>
+            <p className="text-xs text-gray-400 text-center mt-5">Tap or <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">W</kbd> / <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">S</kbd> to flip · <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">A</kbd> / <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">D</kbd> or arrows to navigate</p>
         </div>
+    );
+}
+
+export default function CrammingPage() {
+    return (
+        <Suspense fallback={null}>
+            <CrammingSession />
+        </Suspense>
     );
 }
