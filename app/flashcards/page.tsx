@@ -239,6 +239,7 @@ function ChatDeckCreator({ onCreated }: { onCreated: (deck: FlashcardDeck) => vo
     if (!text || isLoading) return;
     setInput("");
     setError(null);
+    setPendingCards(null);
 
     const userMsg: ChatMessage = { role: "user", content: text };
     apiMessages.current = [...apiMessages.current, userMsg];
@@ -258,9 +259,24 @@ function ChatDeckCreator({ onCreated }: { onCreated: (deck: FlashcardDeck) => vo
       apiMessages.current = [...apiMessages.current, assistantMsg];
       setMessages(prev => [...prev, assistantMsg]);
 
-      if (data.flashcards && data.flashcards.length > 0) {
-        setPendingCards(data.flashcards);
+      const flashcards = Array.isArray(data.flashcards)
+        ? data.flashcards.filter(
+          (card: unknown): card is { question: string; answer: string } =>
+            typeof card === "object" &&
+            card !== null &&
+            typeof (card as { question?: unknown }).question === "string" &&
+            typeof (card as { answer?: unknown }).answer === "string"
+        )
+        : [];
+
+      if (data.flashcards != null && flashcards.length === 0) {
+        throw new Error("The generated flashcards were malformed");
       }
+
+      if (flashcards.length > 0) {
+        setPendingCards(flashcards);
+      }
+
     } catch (err) {
       apiMessages.current = apiMessages.current.slice(0, -1);
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -375,12 +391,17 @@ function ChatDeckCreator({ onCreated }: { onCreated: (deck: FlashcardDeck) => vo
             />
           </div>
 
-          <button onClick={handleSaveDeck} className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+          <button
+            onClick={handleSaveDeck}
+            disabled={isLoading}
+            className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
             <Save className="w-4 h-4" /> Save Deck
           </button>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
 
@@ -647,10 +668,18 @@ export default function FlashcardsPage() {
                     <Link href={`/cramming?deckId=${deck.id}`} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${accent.badge} hover:opacity-80`}>
                       <BookOpen className="w-3.5 h-3.5" /> Study
                     </Link>
-                    <button onClick={() => { setEditingDeck(deck); setView("edit"); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                    <button
+                      onClick={() => { setEditingDeck(deck); setView("edit"); }}
+                      aria-label={`Edit ${deck.name}`}
+                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    >
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setDeleteId(deck.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <button
+                      onClick={() => setDeleteId(deck.id)}
+                      aria-label={`Delete ${deck.name}`}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
