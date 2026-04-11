@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
-//import { GoogleGenerativeAI } from '@google/generative-ai'
 
 // ---------------------------------------------------------------------------
 // MOOD SYSTEM PROMPTS
 // Each mood changes how the cram sheet is written and formatted.
-// A "system instruction" is a behind-the-scenes instruction you give Gemini
+// A "system" prompt is a behind the scenes instruction you give Claude
 // before the user's content — it sets the personality and rules for the response.
-// The SDK passes this separately from the actual text via systemInstruction.
 // ---------------------------------------------------------------------------
 const moodPrompts = {
   // TIRED: bare minimum, ultra short, they just need to survive the exam
@@ -42,21 +40,68 @@ const moodPrompts = {
 // because this file lives at app/api/cram/route.js
 // ---------------------------------------------------------------------------
 export async function POST(req) {
-    // REPLACE with this
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01"
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",  // fast and cheap for testing
-      max_tokens: 1000,
-      system: moodPrompts[mood],
-      messages: [{ role: "user", content: text.trim().slice(0, 12000) }]
+  try {
+    // --- STEP 1: Parse the JSON body the frontend sent ---
+    // req.json() reads and parses the JSON body from the request
+    const { text, mood } = await req.json()
+
+    // --- STEP 2: Validate inputs before hitting the API ---
+    // Failing fast here saves API quota and prevents confusing errors
+    if (!text || text.trim().length === 0) {
+      return NextResponse.json({ error: "No text provided" }, { status: 400 })
+    }
+
+    // Make sure the mood is one of the 4 accepted values
+    const validMoods = ["tired", "stressed", "annoyed", "curious"]
+    if (!mood || !validMoods.includes(mood)) {
+      return NextResponse.json({ error: "Invalid mood" }, { status: 400 })
+    }
+
+    // --- STEP 3: Call the Claude API ---
+    // fetch() runs on the server so the API key is never exposed to the browser
+    // system is the mood-based instructions, messages is the actual content
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY, // pulled from .env.local, never hardcoded
+        "anthropic-version": "2023-06-01"            // tells Claude which API version to use
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001", // fast and cheap for testing
+        max_tokens: 1000,                   // cap how long the response can be
+        system: moodPrompts[mood],          // mood-based rules for this request
+        messages: [
+          {
+            role: "user",
+            // slice to 12000 chars to avoid hitting token limits on large PDFs
+            content: text.trim().slice(0, 12000)
+          }
+        ]
+      })
     })
-  })
-  const data = await response.json()
-  const cram = data.content[0].text
+
+    // --- STEP 4: Handle a failed Claude response ---
+    // response.ok is true for 2xx status codes
+    // If false, something went wrong on Claude's end (bad key, quota, outage)
+    if (!response.ok) {
+      const errorBody = await response.text()
+      console.error("Claude API error:", errorBody)
+      return NextResponse.json({ error: "Claude API request failed" }, { status: 502 })
+    }
+
+    // --- STEP 5: Pull the text out of Claude's response ---
+    // Claude returns content as an array — the first item's text is the answer
+    const data = await response.json()
+    const cram = data.content[0].text
+
+    // --- STEP 6: Send the cram sheet back to the frontend ---
+    // NextResponse.json() serializes the object and sets the correct headers
+    return NextResponse.json({ cram })
+
+  } catch (error) {
+    // Catches anything unexpected: bad API key, network failure, etc.
+    console.error("Cram route error:", error)
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
+  }
 }
