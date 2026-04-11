@@ -3,12 +3,19 @@ import { useState, useEffect, useRef } from "react";
 import { deckAccentClasses } from "@/app/utils/deckAccents";
 import {
   Upload, FileText, AlertCircle, BookOpen, Loader2,
-  ChevronDown, ChevronUp, Pencil, Trash2, Plus, Save, X, Check
+  ChevronDown, ChevronUp, Pencil, Trash2, Plus, Save, X, Check,
+  MessageSquare, Send
 } from "lucide-react";
 import Link from "next/link";
 
 type Mood = "tired" | "stressed" | "annoyed" | "curious";
 type View = "list" | "create" | "edit";
+type CreateMode = "pdf" | "chat";
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
 const moods: { value: Mood; label: string; description: string }[] = [
   { value: "tired", label: "😴 Tired", description: "5 simple cards" },
@@ -208,11 +215,181 @@ function EditDeckView({ deck, onSave, onCancel }: {
   );
 }
 
+// ─── Chat Deck Creator ────────────────────────────────────────────────────────
+const CHAT_GREETING = "Hi! What topic would you like to create flashcards for? Tell me the subject and any detai like: the level of depth or specific areas to focus on and I'll generate a set for you.";
+
+function ChatDeckCreator({ onCreated }: { onCreated: (deck: FlashcardDeck) => void }) {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: "assistant", content: CHAT_GREETING },
+  ]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [pendingCards, setPendingCards] = useState<{ question: string; answer: string }[] | null>(null);
+  const [deckName, setDeckName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const apiMessages = useRef<ChatMessage[]>([]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
+  const sendMessage = async () => {
+    const text = input.trim();
+    if (!text || isLoading) return;
+    setInput("");
+    setError(null);
+
+    const userMsg: ChatMessage = { role: "user", content: text };
+    apiMessages.current = [...apiMessages.current, userMsg];
+    setMessages(prev => [...prev, userMsg]);
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/chat-flashcards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: apiMessages.current }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to get response");
+
+      const assistantMsg: ChatMessage = { role: "assistant", content: data.message || "" };
+      apiMessages.current = [...apiMessages.current, assistantMsg];
+      setMessages(prev => [...prev, assistantMsg]);
+
+      if (data.flashcards && data.flashcards.length > 0) {
+        setPendingCards(data.flashcards);
+      }
+    } catch (err) {
+      apiMessages.current = apiMessages.current.slice(0, -1);
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  };
+
+  const handleSaveDeck = () => {
+    if (!pendingCards) return;
+    const newDeck: FlashcardDeck = {
+      id: `deck-${Date.now()}`,
+      name: deckName.trim() || "AI Generated Deck",
+      createdAt: Date.now(),
+      flashcards: pendingCards.map((card, i) => ({
+        id: `${Date.now()}-${i}`,
+        question: card.question,
+        answer: card.answer,
+        createdAt: Date.now(),
+      })),
+    };
+    const existing = loadDecks();
+    saveDecks([...existing, newDeck]);
+    onCreated(newDeck);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Chat window */}
+      <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+        <div className="h-72 overflow-y-auto p-4 space-y-3">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                msg.role === "user"
+                  ? "bg-indigo-600 text-white rounded-br-sm"
+                  : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm"
+              }`}>
+                {msg.content}
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3">
+                <div className="flex gap-1 items-center">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="border-t border-gray-200 p-3 flex gap-2 bg-white">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Describe a topic to study..."
+            disabled={isLoading}
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-indigo-400 disabled:opacity-50"
+          />
+          <button
+            onClick={sendMessage}
+            disabled={!input.trim() || isLoading}
+            className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-900">{error}</p>
+        </div>
+      )}
+
+      {/* Generated flashcards preview + save */}
+      {pendingCards && pendingCards.length > 0 && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="font-semibold text-indigo-900">{pendingCards.length} flashcards ready</p>
+            <span className="text-xs text-indigo-500">Ask for changes or save below</span>
+          </div>
+
+          <div className="max-h-52 overflow-y-auto space-y-2 pr-1">
+            {pendingCards.map((card, i) => (
+              <div key={i} className="bg-white rounded-lg border border-indigo-100 p-3">
+                <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-0.5">Q</p>
+                <p className="text-sm font-medium text-gray-900">{card.question}</p>
+                <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mt-2 mb-0.5">A</p>
+                <p className="text-sm text-gray-600">{card.answer}</p>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Deck name</label>
+            <input
+              value={deckName}
+              onChange={e => setDeckName(e.target.value)}
+              placeholder="e.g. Biology – Photosynthesis"
+              className="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-indigo-400 bg-white"
+            />
+          </div>
+
+          <button onClick={handleSaveDeck} className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+            <Save className="w-4 h-4" /> Save Deck
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Create Deck View ─────────────────────────────────────────────────────────
 function CreateDeckView({ onCreated, onCancel }: {
   onCreated: (deck: FlashcardDeck) => void;
   onCancel: () => void;
 }) {
+  const [createMode, setCreateMode] = useState<CreateMode>("pdf");
   const [file, setFile] = useState<File | null>(null);
   const [deckName, setDeckName] = useState("");
   const [mood, setMood] = useState<Mood>("curious");
@@ -275,14 +452,36 @@ function CreateDeckView({ onCreated, onCancel }: {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold text-gray-900">New Deck</h1>
-          <p className="text-gray-600 mt-2">Upload a PDF to generate flashcards</p>
+          <p className="text-gray-600 mt-2">
+            {createMode === "pdf" ? "Upload a PDF to generate flashcards" : "Describe a topic and let AI generate flashcards"}
+          </p>
         </div>
         <button onClick={onCancel} className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700">
           <X className="w-4 h-4" /> Cancel
         </button>
       </div>
 
+      {/* Mode toggle */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6 w-fit">
+        <button
+          onClick={() => setCreateMode("pdf")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${createMode === "pdf" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+        >
+          <Upload className="w-4 h-4" /> Upload PDF
+        </button>
+        <button
+          onClick={() => setCreateMode("chat")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${createMode === "chat" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+        >
+          <MessageSquare className="w-4 h-4" /> Chat with AI
+        </button>
+      </div>
+
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+        {createMode === "chat" ? (
+          <ChatDeckCreator onCreated={onCreated} />
+        ) : (
+        <>
         <label htmlFor="pdf-upload" className={`block border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${file ? "border-indigo-400 bg-indigo-50" : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50"}`}>
           <input id="pdf-upload" type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" />
           <div className="flex flex-col items-center gap-4">
@@ -354,6 +553,8 @@ function CreateDeckView({ onCreated, onCancel }: {
               <p className={stage === "generating" ? "animate-pulse" : "opacity-30"}>{stage === "generating" ? "⟳" : "○"} Generating flashcards with AI...</p>
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>
