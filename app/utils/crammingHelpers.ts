@@ -1,4 +1,4 @@
-import type { FlashcardDeck } from "@/app/utils/aiApi";
+import type { FlashcardDeck } from "./aiApi";
 
 export function checkIfComplete(
     known: Set<string>,
