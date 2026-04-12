@@ -83,8 +83,7 @@
                 "npm"
             ],
             "separateMajorMinor": true
-        },
-        {}
+        }
     ],
     "lockFileMaintenance": {
         "enabled": true,
