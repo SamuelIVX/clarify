@@ -69,7 +69,7 @@ flowchart TD
 - Choose a **mood** to control depth and quantity:
 
   | Mood | Cards | Style |
-  |------|-------|-------|
+  | ---- | ----- | ----- |
   | 😴 Tired | 5 | Short & simple |
   | 😰 Stressed | 3 | Critical points only |
   | 😤 Annoyed | 5 | Blunt, no fluff |
@@ -103,7 +103,7 @@ flowchart TD
 - Upload a PDF and receive a mood-tailored summary:
 
   | Mood | Style |
-  |------|-------|
+  | ---- | ----- |
   | 😴 Tired | 5 bullets, ≤ 10 words each + funny analogy |
   | 😰 Stressed | 3 numbered critical points, calm tone |
   | 😤 Annoyed | Blunt, no intro, fewest words possible |
@@ -117,7 +117,7 @@ flowchart TD
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+| ----- | ---------- |
 | Framework | [Next.js 16](https://nextjs.org/) (App Router) |
 | Language | TypeScript 5 (strict mode) |
 | Styling | Tailwind CSS v4 |
@@ -217,7 +217,7 @@ The app is deployed on [Vercel](https://vercel.com). To deploy your own:
 ## API Routes
 
 | Route | Method | Input | Output | Model |
-|-------|--------|-------|--------|-------|
+| ----- | ------ | ----- | ------ | ----- |
 | `/api/extract` | POST | `FormData { pdf: File }` | `{ text: string }` | — (unpdf) |
 | `/api/flashcards` | POST | `{ text, mood }` | `{ flashcards: [{question, answer}] }` | Claude Opus 4.6 |
 | `/api/chat-flashcards` | POST | `{ messages: Message[] }` | `{ message: string, flashcards: [{question, answer}] \| null }` | Claude Opus 4.6 |
