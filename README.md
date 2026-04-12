@@ -21,6 +21,7 @@ flowchart TD
     subgraph Server["Next.js API Routes (Server)"]
         EX["/api/extract\nPDF → Text\n(unpdf)"]
         FL["/api/flashcards\nText → Flashcards\n(Claude Opus 4.6)"]
+        CF["/api/chat-flashcards\nConversation → Flashcards\n(Claude Opus 4.6)"]
         SU["/api/summarize\nText → Summary\n(Claude Opus 4.6)"]
         AT["/api/analyze-topics\nWrong cards → Weak topics\n(Claude Haiku 4.5)"]
     end
@@ -36,6 +37,7 @@ flowchart TD
     Home --> FC & CR & SM
 
     FC -->|"Upload PDF"| PDF
+    FC -->|"Chat with AI"| CF
     SM -->|"Upload PDF"| PDF
 
     PDF -->|"POST /api/extract"| EX
@@ -43,10 +45,12 @@ flowchart TD
     EX -->|"Extracted text"| SU
 
     FL -->|"POST /api/flashcards"| OP
+    CF -->|"POST /api/chat-flashcards"| OP
     SU -->|"POST /api/summarize"| OP
     AT -->|"POST /api/analyze-topics"| HK
 
     OP -->|"Flashcard JSON"| FC
+    OP -->|"Flashcard JSON"| CF
     OP -->|"Summary markdown"| SM
     HK -->|"Topic strings"| CR
 
@@ -74,6 +78,12 @@ flowchart TD
 - Name decks, expand to preview cards inline, edit individual Q&A pairs
 - Add and delete cards manually
 - All decks persisted in `localStorage`
+
+### Chat-Based Flashcard Generation
+- Generate flashcards on any topic through natural conversation — no PDF required
+- Toggle "Chat with AI" on the flashcards page to open the chat panel
+- Describe a topic and Claude generates 8 flashcards by default; ask for more, fewer, or a different focus and it regenerates the full set
+- Claude may ask one clarifying question (depth, level, specific focus) before generating
 
 ### Cramming Sessions
 - Pick any saved deck and start studying immediately
@@ -128,13 +138,14 @@ clarify/
 ├── app/
 │   ├── api/
 │   │   ├── analyze-topics/route.js   # Identifies weak topics from wrong cards
+│   │   ├── chat-flashcards/route.js  # Conversational flashcard generation (Claude Opus)
 │   │   ├── extract/route.js          # PDF → plain text (unpdf)
 │   │   ├── flashcards/route.js       # Text → flashcard JSON (Claude Opus)
 │   │   └── summarize/route.js        # Text → summary markdown (Claude Opus)
 │   ├── cramming/
 │   │   └── page.tsx                  # Interactive study session
 │   ├── flashcards/
-│   │   └── page.tsx                  # Deck management + creation
+│   │   └── page.tsx                  # Deck management + creation + AI chat
 │   ├── summary/
 │   │   └── page.tsx                  # PDF summarization
 │   ├── utils/
@@ -146,7 +157,6 @@ clarify/
 │   └── page.tsx                      # Landing page
 ├── components/
 │   └── Navbar.tsx                    # Sticky nav, hidden on home page
-├── .env.local.example
 ├── next.config.ts
 └── package.json
 ```
@@ -169,11 +179,7 @@ npm install
 
 ### Environment Variables
 
-Copy the example file and add your key:
-
-```bash
-cp .env.local.example .env.local
-```
+Create a `.env.local` file in the project root:
 
 ```env
 # .env.local
@@ -214,6 +220,7 @@ The app is deployed on [Vercel](https://vercel.com). To deploy your own:
 |-------|--------|-------|--------|-------|
 | `/api/extract` | POST | `FormData { pdf: File }` | `{ text: string }` | — (unpdf) |
 | `/api/flashcards` | POST | `{ text, mood }` | `{ flashcards: [{question, answer}] }` | Claude Opus 4.6 |
+| `/api/chat-flashcards` | POST | `{ messages: Message[] }` | `{ message: string, flashcards: [{question, answer}] \| null }` | Claude Opus 4.6 |
 | `/api/summarize` | POST | `{ text, mood }` | `{ summary: string }` | Claude Opus 4.6 |
 | `/api/analyze-topics` | POST | `{ flashcards: Flashcard[] }` | `{ topics: string[] }` | Claude Haiku 4.5 |
 
