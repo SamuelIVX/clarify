@@ -1,6 +1,6 @@
 # Clarify
 
-An AI-powered study assistant that transforms PDFs into personalized learning experiences. Upload a document, pick your mood, and Clarify generates flashcards, cramming sessions, or summaries, all powered by Claude.
+An AI-powered study assistant that transforms PDFs into personalized learning experiences. Upload a document, pick your mood, and Clarify generates flashcards, cramming sessions, or summaries — all powered by Claude.
 
 ---
 
@@ -87,8 +87,7 @@ flowchart TD
 
 ### Cramming Sessions
 - Pick any saved deck and start studying immediately
-- Flip cards by clicking or keyboard (`W` / `S` / `Space` / `↑` / `↓`)
-- Navigate with `A` / `D` or arrow keys
+- Flip cards by clicking or keyboard shortcuts
 - Mark each card **Know It** or **Don't Know**
 - Real-time progress bar showing known / unknown / unreviewed counts
 - Session statistics on completion:
@@ -98,6 +97,13 @@ flowchart TD
   - Full list of cards you got wrong
 - Retry only the wrong cards, or reset and go again
 - Rename the deck inline during a session
+- End session early with "Finish Session" button
+
+### Keyboard Controls
+| Key | Action |
+|-----|--------|
+| W / S / Space / ↑ / ↓ | Flip card |
+| A / D / ← / → | Navigate to previous/next card |
 
 ### AI Summaries
 - Upload a PDF and receive a mood-tailored summary:
@@ -109,8 +115,44 @@ flowchart TD
   | 😤 Annoyed | Blunt, no intro, fewest words possible |
   | 🤓 Curious | Deep dive with insights and real-world context |
 
+- Two-stage loading: shows "Extracting PDF..." then "Generating summary..."
 - Rendered markdown with styled headings, bullets, and inline bold
 - Copy to clipboard or download as a formatted PDF
+
+---
+
+## Mood System
+
+The app's core innovation is the **mood system** — four distinct emotional states that shape how the AI generates content. Each mood controls both the quantity and style of output.
+
+### Mood Selection
+
+Choose your current mental state when generating content:
+
+| Mood | When to Use |
+| ---- | ----------- |
+| 😴 **Tired** | Late night studying, quick reviews |
+| 😰 **Stressed** | Exam eve, need only the essentials |
+| 😤 **Annoyed** | Want to get it done fast, no fluff |
+| 🤓 **Curious** | Deep learning, thorough understanding |
+
+### Flashcard Output
+
+| Mood | Card Count | Characteristics |
+| ---- | ---------- | ----------------|
+| 😴 Tired | 5 | Super short Q&A, minimal detail |
+| 😰 Stressed | 3 | Only critical points, cram-friendly |
+| 😤 Annoyed | 5 | Blunt, direct, no filler |
+| 🤓 Curious | 10 | Comprehensive, includes nuances |
+
+### Summary Output
+
+| Mood | Output Style |
+| ---- | ------------ |
+| 😴 Tired | 5 bullets max, ≤10 words each, includes a funny analogy |
+| 😰 Stressed | 3 numbered critical points, calming tone |
+| 😤 Annoyed | Fewest words possible, no intro/outro |
+| 🤓 Curious | Full markdown with headings, insights, context |
 
 ---
 
@@ -118,16 +160,16 @@ flowchart TD
 
 | Layer | Technology |
 | ----- | ---------- |
-| Framework | [Next.js 16](https://nextjs.org/) (App Router) |
-| Language | TypeScript 5 (strict mode) |
-| Styling | Tailwind CSS v4 |
-| UI Components | shadcn/ui + Base UI + Lucide React |
+| Framework | [Next.js 16.2.3](https://nextjs.org/) (App Router) |
+| Language | [TypeScript 6](https://www.typescriptlang.org/) (strict mode) |
+| Styling | [Tailwind CSS v4](https://tailwindcss.com/) |
+| UI Components | [shadcn/ui](https://ui.shadcn.com/) + [Base UI](https://baseui.com/) + [Lucide React](https://lucide.dev/) |
 | AI | [Anthropic Claude](https://anthropic.com) (Opus 4.6 + Haiku 4.5) |
 | PDF Extraction | [unpdf](https://github.com/unjs/unpdf) |
-| PDF Export | jsPDF |
+| PDF Export | [jsPDF](https://github.com/parallax/jsPDF) |
 | Fonts | Geist Sans + Geist Mono (next/font) |
 | Storage | Browser localStorage |
-| Deployment | Vercel |
+| Deployment | [Vercel](https://vercel.com) |
 
 ---
 
@@ -137,28 +179,53 @@ flowchart TD
 clarify/
 ├── app/
 │   ├── api/
-│   │   ├── analyze-topics/route.js   # Identifies weak topics from wrong cards
-│   │   ├── chat-flashcards/route.js  # Conversational flashcard generation (Claude Opus)
-│   │   ├── extract/route.js          # PDF → plain text (unpdf)
-│   │   ├── flashcards/route.js       # Text → flashcard JSON (Claude Opus)
-│   │   └── summarize/route.js        # Text → summary markdown (Claude Opus)
+│   │   ├── extract/route.js            # PDF → plain text (unpdf)
+│   │   ├── flashcards/route.js         # Text → flashcard JSON (Claude Opus)
+│   │   ├── chat-flashcards/route.js   # Conversation → flashcards (Claude Opus)
+│   │   ├── summarize/route.js        # Text → summary markdown (Claude Opus)
+│   │   └── analyze-topics/route.js    # Wrong cards → weak topics (Claude Haiku)
 │   ├── cramming/
-│   │   └── page.tsx                  # Interactive study session
+│   │   └── page.tsx                   # Interactive study session
 │   ├── flashcards/
-│   │   └── page.tsx                  # Deck management + creation + AI chat
+│   │   └── page.tsx                   # Deck management + creation + AI chat
 │   ├── summary/
-│   │   └── page.tsx                  # PDF summarization
+│   │   └── page.tsx                   # PDF summarization
 │   ├── utils/
-│   │   ├── aiApi.ts                  # Client-side API helpers + shared types
-│   │   ├── crammingHelpers.ts        # Pure session logic helpers
-│   │   └── deckAccents.ts            # Shared deck color accent classes
+│   │   ├── aiApi.ts                   # Client-side API helpers + types
+│   │   ├── crammingHelpers.ts         # Session logic helpers
+│   │   └── deckAccents.ts             # Deck color accent classes
 │   ├── globals.css
 │   ├── layout.tsx
-│   └── page.tsx                      # Landing page
+│   └── page.tsx                       # Landing page
 ├── components/
-│   └── Navbar.tsx                    # Sticky nav, hidden on home page
+│   ├── flashcards/                    # Flashcard components
+│   │   ├── CreateDeckView.tsx
+│   │   ├── EditDeckView.tsx
+│   │   ├── DeckCard.tsx
+│   │   ├── ChatDeckCreator.tsx
+│   │   ├── QACard.tsx
+│   │   ├── ModeToggle.tsx
+│   │   ├── DeckActions.tsx
+│   │   └── ConfirmDeleteModal.tsx
+│   ├── summary/                       # Summary components
+│   │   ├── FileUpload.tsx
+│   │   ├── SummaryContent.tsx
+│   │   ├── RenderSummary.tsx
+│   │   ├── ProcessingPDF.tsx
+│   │   ├── MoodSelector.tsx
+│   │   └── ActionsSection.tsx
+│   └── ui/                            # shadcn/ui base components
+│       ├── button.tsx
+│       └── navigation-menu.tsx
+├── lib/
+│   ├── utils.ts                       # cn() className merger
+│   └── prompts.js                     # Mood-based prompt templates
+├── utils/
+│   ├── flashcardStorage.ts            # localStorage helpers
+│   └── pdfExport.ts                   # PDF download functionality
+├── package.json
 ├── next.config.ts
-└── package.json
+└── tsconfig.json
 ```
 
 ---
