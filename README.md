@@ -100,8 +100,9 @@ flowchart TD
 - End session early with "Finish Session" button
 
 ### Keyboard Controls
-| Key | Action |
-|-----|--------|
+
+| Key       | Action                        |
+|-----------|-------------------------------|
 | W / S / Space / ↑ / ↓ | Flip card |
 | A / D / ← / → | Navigate to previous/next card |
 
@@ -139,7 +140,7 @@ Choose your current mental state when generating content:
 ### Flashcard Output
 
 | Mood | Card Count | Characteristics |
-| ---- | ---------- | ----------------|
+| ---- | ---------- | ---------------- |
 | 😴 Tired | 5 | Super short Q&A, minimal detail |
 | 😰 Stressed | 3 | Only critical points, cram-friendly |
 | 😤 Annoyed | 5 | Blunt, direct, no filler |
