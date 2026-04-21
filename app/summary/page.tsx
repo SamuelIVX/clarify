@@ -1,83 +1,13 @@
 "use client";
 import { useState, type ChangeEvent } from "react";
 import { Upload, FileText, Loader2, AlertCircle, Copy, Check, Download } from "lucide-react";
-import jsPDF from "jspdf";
-
-function renderSummary(text: string) {
-  const lines = text.split("\n");
-  const elements: React.ReactNode[] = [];
-
-  const renderInline = (line: string, key: number) => {
-    const parts = line.split(/(\*\*[^*]+\*\*)/g);
-    return (
-      <span key={key}>
-        {parts.map((part, i) =>
-          part.startsWith("**") && part.endsWith("**")
-            ? <strong key={i} className="font-semibold text-gray-900">{part.slice(2, -2)}</strong>
-            : part
-        )}
-      </span>
-    );
-  };
-
-  lines.forEach((line, i) => {
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      elements.push(<div key={i} className="h-2" />);
-    } else if (/^#{1,2}\s/.test(trimmed)) {
-      elements.push(
-        <h2 key={i} className="text-lg font-bold text-gray-900 mt-4 mb-1 border-b border-gray-100 pb-1">
-          {trimmed.replace(/^#{1,2}\s/, "")}
-        </h2>
-      );
-    } else if (/^###\s/.test(trimmed)) {
-      elements.push(
-        <h3 key={i} className="text-base font-semibold text-gray-800 mt-3 mb-1">
-          {trimmed.replace(/^###\s/, "")}
-        </h3>
-      );
-    } else if (/^[-•*]\s/.test(trimmed)) {
-      elements.push(
-        <div key={i} className="flex items-start gap-2 py-0.5">
-          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-pink-400 shrink-0" />
-          <span className="text-gray-700 text-sm leading-relaxed">
-            {renderInline(trimmed.replace(/^[-•*]\s/, ""), i)}
-          </span>
-        </div>
-      );
-    } else if (/^\d+\.\s/.test(trimmed)) {
-      const num = trimmed.match(/^(\d+)\./)?.[1];
-      elements.push(
-        <div key={i} className="flex items-start gap-3 py-0.5">
-          <span className="shrink-0 w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-xs font-bold flex items-center justify-center mt-0.5">
-            {num}
-          </span>
-          <span className="text-gray-700 text-sm leading-relaxed">
-            {renderInline(trimmed.replace(/^\d+\.\s/, ""), i)}
-          </span>
-        </div>
-      );
-    } else {
-      elements.push(
-        <p key={i} className="text-gray-700 text-sm leading-relaxed">
-          {renderInline(trimmed, i)}
-        </p>
-      );
-    }
-  });
-
-  return elements;
-}
-
-type Mood = "tired" | "stressed" | "annoyed" | "curious";
-
-const moods: { value: Mood; label: string; description: string }[] = [
-  { value: "tired", label: "😴 Tired", description: "5 bullets, bare minimum" },
-  { value: "stressed", label: "😰 Stressed", description: "Top 3 critical points" },
-  { value: "annoyed", label: "😤 Annoyed", description: "Blunt, no fluff" },
-  { value: "curious", label: "🤓 Curious", description: "Deep dive with context" },
-];
+import { Mood, moods } from "./types";
+import { handleDownload } from "@/utils/pdfExport";
+import FileUpload from "@/components/summary/FileUpload";
+import SummaryContent from "@/components/summary/SummaryContent";
+import ActionsSection from "@/components/summary/ActionsSection";
+import ProcessingPDF from "@/components/summary/ProcessingPDF";
+import MoodSelector from "@/components/summary/MoodSelector";
 
 export default function SummaryPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -139,97 +69,13 @@ export default function SummaryPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 48;
-    const maxWidth = pageWidth - margin * 2;
-    let y = 60;
-
-    const addPage = () => {
-      doc.addPage();
-      y = 48;
-    };
-
-    const checkY = (needed: number) => {
-      if (y + needed > doc.internal.pageSize.getHeight() - 48) addPage();
-    };
-
-    const writeWrapped = (wrapped: string[], x: number, lineHeight = 14, gap = 2) => {
-      const pageBottom = doc.internal.pageSize.getHeight() - 48;
-
-      while (wrapped.length > 0) {
-        const available = Math.floor((pageBottom - y) / lineHeight);
-        if (available <= 0) {
-          addPage();
-          continue;
-        }
-
-        const chunk = wrapped.splice(0, available);
-        doc.text(chunk, x, y);
-        y += chunk.length * lineHeight + gap;
-
-        if (wrapped.length > 0) addPage();
-      }
-    };
-
-    const cleanInline = (value: string) => value.replace(/\*\*([^*]+)\*\*/g, "$1");
-
-    // Title
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(17, 24, 39);
-    doc.text(file?.name.replace(".pdf", "") ?? "Summary", margin, y);
-    y += 32;
-
-    for (const line of summary.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed) { y += 8; continue; }
-
-      if (/^#{1,2}\s/.test(trimmed)) {
-        checkY(28);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(13);
-        doc.setTextColor(17, 24, 39);
-        doc.text(trimmed.replace(/^#{1,3}\s/, ""), margin, y);
-        y += 20;
-      } else if (/^###\s/.test(trimmed)) {
-        checkY(22);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.setTextColor(55, 65, 81);
-        doc.text(trimmed.replace(/^###\s/, ""), margin, y);
-        y += 16;
-      } else if (/^[-•*]\s/.test(trimmed)) {
-        const text = cleanInline(trimmed.replace(/^[-•*]\s/, ""));
-        const wrapped = doc.splitTextToSize(`• ${text}`, maxWidth - 12);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(55, 65, 81);
-        writeWrapped([...wrapped], margin + 8);
-      } else if (/^\d+\.\s/.test(trimmed)) {
-        const wrapped = doc.splitTextToSize(cleanInline(trimmed), maxWidth - 12);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(55, 65, 81);
-        writeWrapped([...wrapped], margin + 8);
-      } else {
-        const clean = cleanInline(trimmed);
-        const wrapped = doc.splitTextToSize(clean, maxWidth);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(75, 85, 99);
-        writeWrapped([...wrapped], margin, 14, 4);
-      }
-    }
-
-    doc.save(`${file?.name.replace(".pdf", "") ?? "summary"}-summary.pdf`);
-  };
-
   const handleReset = () => {
     setFile(null);
+    setMood("curious");
+    setStage(null);
     setSummary("");
     setError(null);
+    setCopied(false);
   };
 
   return (
@@ -262,27 +108,17 @@ export default function SummaryPage() {
 
               <div className="flex flex-col items-center gap-4">
                 {file ? (
-                  <>
-                    <FileText className="w-16 h-16 text-pink-600" />
-                    <div>
-                      <p className="text-lg font-medium text-gray-900">{file.name}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </>
+                  <FileUpload
+                    title={file.name}
+                    description={`${(file.size / 1024 / 1024).toFixed(2)} MB`}
+                    icon={<FileText className="w-16 h-16 text-pink-600" />}
+                  />
                 ) : (
-                  <>
-                    <Upload className="w-16 h-16 text-gray-400" />
-                    <div>
-                      <p className="text-lg font-medium text-gray-900">
-                        Click to upload a PDF
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Upload your study material to get an AI summary
-                      </p>
-                    </div>
-                  </>
+                  <FileUpload
+                    title="Click to upload a PDF"
+                    description="Upload your study material to get an AI summary"
+                    icon={<Upload className="w-16 h-16 text-gray-400" />}
+                  />
                 )}
               </div>
             </label>
@@ -295,50 +131,16 @@ export default function SummaryPage() {
             )}
 
             {file && !stage && (
-              <>
-                <div className="mt-6">
-                  <p className="text-sm font-medium text-gray-700 mb-3">How are you feeling?</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {moods.map((m) => (
-                      <button
-                        key={m.value}
-                        onClick={() => setMood(m.value)}
-                        className={`p-3 rounded-lg border text-left transition-all ${mood === m.value
-                          ? "border-pink-400 bg-pink-50"
-                          : "border-gray-200 hover:border-pink-300 hover:bg-gray-50"
-                          }`}
-                      >
-                        <p className="font-medium text-sm text-gray-900">{m.label}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{m.description}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  onClick={handleGenerateSummary}
-                  className="mt-4 w-full bg-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-pink-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <FileText className="w-5 h-5" />
-                  Generate Summary
-                </button>
-              </>
+              <MoodSelector
+                moods={moods}
+                mood={mood}
+                onMoodChange={setMood}
+                onGenerate={handleGenerateSummary}
+              />
             )}
 
             {stage && (
-              <div className="mt-6 bg-pink-50 border border-pink-200 rounded-lg p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Loader2 className="w-6 h-6 text-pink-600 animate-spin" />
-                  <p className="font-medium text-pink-900">Generating summary...</p>
-                </div>
-                <div className="space-y-2 text-sm text-pink-700">
-                  <p className={stage === "extracting" ? "animate-pulse" : "opacity-50"}>
-                    {stage === "extracting" ? "⟳" : "✓"} Extracting text from PDF...
-                  </p>
-                  <p className={stage === "summarizing" ? "animate-pulse" : "opacity-30"}>
-                    {stage === "summarizing" ? "⟳" : "·"} Summarizing with AI...
-                  </p>
-                </div>
-              </div>
+              <ProcessingPDF stage={stage} />
             )}
           </div>
         </div>
@@ -369,7 +171,7 @@ export default function SummaryPage() {
                   )}
                 </button>
                 <button
-                  onClick={handleDownload}
+                  onClick={() => handleDownload(file, summary)}
                   className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
                 >
                   <Download className="w-4 h-4" />
@@ -380,23 +182,11 @@ export default function SummaryPage() {
           </div>
 
           {/* Summary Content */}
-          <div className="bg-white rounded-lg shadow border border-gray-200">
-            <div className="overflow-y-auto max-h-[60vh] p-8">
-              <div className="space-y-1">
-                {renderSummary(summary)}
-              </div>
-            </div>
-          </div>
+          <SummaryContent summary={summary} />
 
           {/* Actions */}
-          <div className="flex justify-center">
-            <button
-              onClick={handleReset}
-              className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Summarize Another PDF
-            </button>
-          </div>
+          <ActionsSection handleReset={handleReset} />
+
         </div>
       )}
     </div>
