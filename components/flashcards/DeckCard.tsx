@@ -51,7 +51,10 @@ export default function DeckCard({
                 </button>
                 <div className="flex items-center gap-2 shrink-0">
                     <Link
-                        href={`/cramming?deckId=${deck.id}`}
+                        href={{
+                            pathname: "/cramming",
+                            query: { deckId: encodeURIComponent(String(deck.id)) },
+                        }}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${accent.badge} hover:opacity-80`}
                     >
                         <BookOpen className="w-3.5 h-3.5" /> Study
