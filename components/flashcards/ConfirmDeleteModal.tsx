@@ -55,7 +55,7 @@ export default function ConfirmDeleteModal({ message, onConfirm, onCancel }: {
                 ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="confirm-delete-title"
+                aria-describedby="confirm-delete-description"
                 className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-6 max-w-sm w-full mx-4"
             >
                 <div className="flex items-start gap-3 mb-5">
@@ -64,7 +64,7 @@ export default function ConfirmDeleteModal({ message, onConfirm, onCancel }: {
                     </div>
                     <div>
                         <p id="confirm-delete-title" className="font-semibold text-gray-900">Confirm Delete</p>
-                        <p className="text-sm text-gray-500 mt-0.5">{message}</p>
+                        <p id="confirm-delete-description" className="text-sm text-gray-500 mt-0.5">{message}</p>
                     </div>
                 </div>
                 <div className="flex gap-2 justify-end">

@@ -40,6 +40,7 @@ export function handleDownload(file: File | null, summary: string) {
                     y += lineHeight;
                     currentX = x;
                     if (y > pageBottom) addPage();
+                    if (word.trim() === '') continue;
                 }
                 doc.text(word, currentX, y);
                 currentX += width;
@@ -63,12 +64,20 @@ export function handleDownload(file: File | null, summary: string) {
             checkY(28);
             doc.setFontSize(13);
             doc.setTextColor(17, 24, 39);
-            writeSegments(cleanInline(trimmed.replace(/^#{1,2}\s/, "")), margin, 20);
+            writeSegments(
+                cleanInline(trimmed.replace(/^#{1,2}\s/, "")).map(s => ({ ...s, bold: true })),
+                margin,
+                20,
+            );
         } else if (/^###\s/.test(trimmed)) {
             checkY(22);
             doc.setFontSize(11);
             doc.setTextColor(55, 65, 81);
-            writeSegments(cleanInline(trimmed.replace(/^###\s/, "")), margin, 16);
+            writeSegments(
+                cleanInline(trimmed.replace(/^###\s/, "")).map(s => ({ ...s, bold: true })),
+                margin,
+                16,
+            );
         } else if (/^[-•*]\s/.test(trimmed)) {
             const segments = cleanInline(trimmed.replace(/^[-•*]\s/, ""));
             checkY(14);

@@ -82,7 +82,6 @@ export default function ChatDeckCreator({ onCreated }: { onCreated: (deck: Flash
 
     const handleSaveDeck = () => {
         if (!pendingCards || hasSaved) return;
-        setHasSaved(true);
         const now = Date.now();
 
         const newDeck: FlashcardDeck = {
@@ -97,7 +96,11 @@ export default function ChatDeckCreator({ onCreated }: { onCreated: (deck: Flash
             })),
         };
         const existing = loadDecks();
-        saveDecks([...existing, newDeck]);
+        if (!saveDecks([...existing, newDeck])) {
+            setError("Could not save deck. Your browser storage may be full or unavailable.");
+            return;
+        }
+        setHasSaved(true);
         setPendingCards(null);
         onCreated(newDeck);
     };
