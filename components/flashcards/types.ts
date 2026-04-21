@@ -23,7 +23,7 @@ export interface ModeToggleProps {
 }
 
 export interface DeckActionProps {
-    onEdit: () => void;
+    onChange: () => void;
     ariaLabel: string;
     hoverColor: string;
     icon: ReactNode;

@@ -8,18 +8,51 @@ export default function ConfirmDeleteModal({ message, onConfirm, onCancel }: {
     onCancel: () => void;
 }) {
     const cancelRef = useRef<HTMLButtonElement>(null);
+    const dialogRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
+        const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         cancelRef.current?.focus();
-        const handleEscape = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
-        document.addEventListener("keydown", handleEscape);
-        return () => document.removeEventListener("keydown", handleEscape);
+
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                onCancel();
+                return;
+            }
+
+            if (e.key !== "Tab") return;
+
+            const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            if (!focusable?.length) return;
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+            previousFocus?.focus();
+        };
     }, [onCancel]);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/30" onClick={onCancel} />
             <div
+                ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="confirm-delete-title"

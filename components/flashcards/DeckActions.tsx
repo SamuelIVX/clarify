@@ -1,11 +1,17 @@
 import { DeckActionProps } from "./types"
 
-export default function DeckActions({ onEdit, ariaLabel, hoverColor, icon }: DeckActionProps) {
+export default function DeckActions({ onChange, ariaLabel, hoverColor, icon }: DeckActionProps) {
+
+    const hoverClasses: Record<string, string> = {
+        indigo: "hover:text-indigo-600 hover:bg-indigo-50",
+        red: "hover:text-red-600 hover:bg-red-50",
+    };
+
     return (
         <button
-            onClick={onEdit}
+            onClick={onChange}
             aria-label={ariaLabel}
-            className={`p-1.5 text-gray-400 hover:text-${hoverColor}-600 hover:bg-${hoverColor}-50 rounded-lg transition-colors`}
+            className={`p-1.5 text-gray-400 ${hoverClasses[hoverColor] ?? ""} rounded-lg transition-colors`}
         >
             {icon}
         </button>

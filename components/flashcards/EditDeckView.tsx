@@ -20,8 +20,12 @@ export default function EditDeckView({ deck, onSave, onCancel }: {
     };
 
     const addCard = () => {
-        const newCard: Flashcard = { id: `${Date.now()}`, question: "", answer: "", createdAt: Date.now() };
-        setCards(prev => [...prev, newCard]);
+        const newCard: Flashcard = {
+            id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `card-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            question: "",
+            answer: "",
+            createdAt: Date.now(),
+        }; setCards(prev => [...prev, newCard]);
         setEditingId(newCard.id);
     };
 

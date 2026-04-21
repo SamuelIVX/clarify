@@ -17,13 +17,14 @@ export default function CreateDeckView({ onCreated, onCancel }: {
     const [mood, setMood] = useState<Mood>("curious");
     const [stage, setStage] = useState<"extracting" | "generating" | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [truncationWarning, setTruncationWarning] = useState<string | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const uploaded = e.target.files?.[0];
         if (!uploaded) return;
         if (uploaded.type !== "application/pdf") { setError("Please upload a PDF file"); return; }
         setFile(uploaded);
-        setDeckName(uploaded.name.replace(".pdf", ""));
+        setDeckName(uploaded.name.replace(/\.pdf$/i, ""));
         setError(null);
     };
 
@@ -31,6 +32,7 @@ export default function CreateDeckView({ onCreated, onCancel }: {
         if (!file) return;
         setStage("extracting");
         setError(null);
+        setTruncationWarning(null);
         try {
             const formData = new FormData();
             formData.append("pdf", file);
@@ -39,17 +41,27 @@ export default function CreateDeckView({ onCreated, onCancel }: {
             if (!extractRes.ok) throw new Error(extractData.error || "Failed to extract PDF text");
 
             setStage("generating");
+            const text = extractData.text;
+            const isTruncated = text.length > 20000;
+            if (isTruncated) {
+                setTruncationWarning(`PDF was truncated to 20,000 characters (original: ${text.length.toLocaleString()}). Later sections won't be represented in flashcards.`);
+            }
             const flashRes = await fetch("/api/flashcards", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: extractData.text.slice(0, 20000), mood }),
+                body: JSON.stringify({
+                    text: text.slice(0, 20000),
+                    mood,
+                    truncated: isTruncated,
+                    originalLength: text.length,
+                }),
             });
             const flashData = await flashRes.json();
             if (!flashRes.ok) throw new Error(flashData.error || "Failed to generate flashcards");
 
             const newDeck: FlashcardDeck = {
                 id: `deck-${Date.now()}`,
-                name: deckName.trim() || file.name.replace(".pdf", ""),
+                name: deckName.trim() || file.name.replace(/\.pdf$/i, ""),
                 createdAt: Date.now(),
                 flashcards: flashData.flashcards.map((card: { question: string; answer: string }, i: number) => ({
                     id: `${Date.now()}-${i}`,
@@ -86,13 +98,13 @@ export default function CreateDeckView({ onCreated, onCancel }: {
             {/* Mode toggle */}
             <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6 w-fit">
                 <ModeToggle
-                    mode={"pdf"}
+                    mode={createMode}
                     onModeChange={setCreateMode}
                     icon={<Upload className="w-4 h-4" />}
                 />
 
                 <ModeToggle
-                    mode={"chat"}
+                    mode={createMode}
                     onModeChange={setCreateMode}
                     icon={<MessageSquare className="w-4 h-4" />}
                 />
@@ -130,6 +142,13 @@ export default function CreateDeckView({ onCreated, onCancel }: {
                             <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
                                 <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                                 <p className="text-sm text-red-900">{error}</p>
+                            </div>
+                        )}
+
+                        {truncationWarning && (
+                            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
+                                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                <p className="text-sm text-amber-900">{truncationWarning}</p>
                             </div>
                         )}
 

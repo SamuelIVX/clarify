@@ -17,6 +17,7 @@ export default function MoodSelector({ moods, mood, onMoodChange, onGenerate }: 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {moods.map((m) => (
           <button
+            type="button"
             key={m.value}
             onClick={() => onMoodChange(m.value)}
             className={`p-3 rounded-lg border text-left transition-all ${mood === m.value
@@ -30,6 +31,7 @@ export default function MoodSelector({ moods, mood, onMoodChange, onGenerate }: 
         ))}
       </div>
       <button
+        type="button"
         onClick={onGenerate}
         className="mt-4 w-full bg-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-pink-700 transition-colors flex items-center justify-center gap-2"
       >

@@ -71,8 +71,11 @@ export default function SummaryPage() {
 
   const handleReset = () => {
     setFile(null);
+    setMood("curious");
+    setStage(null);
     setSummary("");
     setError(null);
+    setCopied(false);
   };
 
   return (

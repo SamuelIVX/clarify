@@ -1,10 +1,11 @@
 import { jsPDF } from "jspdf";
 
 export function handleDownload(file: File | null, summary: string) {
+    type TextSegment = { text: string; bold: boolean };
+
     const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 48;
-    const maxWidth = pageWidth - margin * 2;
+    const maxWidth = 432;
     let y = 60;
 
     const addPage = () => {
@@ -16,32 +17,43 @@ export function handleDownload(file: File | null, summary: string) {
         if (y + needed > doc.internal.pageSize.getHeight() - 48) addPage();
     };
 
-    const writeWrapped = (wrapped: string[], x: number, lineHeight = 14, gap = 2) => {
-        const pageBottom = doc.internal.pageSize.getHeight() - 48;
-
-        while (wrapped.length > 0) {
-            const available = Math.floor((pageBottom - y) / lineHeight);
-            if (available <= 0) {
-                addPage();
-                continue;
-            }
-
-            const chunk = wrapped.splice(0, available);
-            doc.text(chunk, x, y);
-            y += chunk.length * lineHeight + gap;
-
-            if (wrapped.length > 0) addPage();
-        }
+    const cleanInline = (value: string): TextSegment[] => {
+        const parts = value.split(/(\*\*[^*]+\*\*)/g);
+        return parts.map(part => ({
+            text: part.replace(/\*\*/g, ""),
+            bold: part.startsWith("**") && part.endsWith("**")
+        }));
     };
 
-    const cleanInline = (value: string) => value.replace(/\*\*([^*]+)\*\*/g, "$1");
+    const writeSegments = (segments: TextSegment[], x: number, lineHeight = 14) => {
+        let currentX = x;
+        const pageBottom = doc.internal.pageSize.getHeight() - 48;
+
+        for (const seg of segments) {
+            doc.setFont("helvetica", seg.bold ? "bold" : "normal");
+            const words = seg.text.split(/(\s+)/);
+
+            for (const word of words) {
+                if (!word) continue;
+                const width = doc.getTextWidth(word);
+                if (currentX + width > margin + maxWidth) {
+                    y += lineHeight;
+                    currentX = x;
+                    if (y > pageBottom) addPage();
+                }
+                doc.text(word, currentX, y);
+                currentX += width;
+            }
+        }
+        y += lineHeight + 4;
+    };
 
     // Title
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.setTextColor(17, 24, 39);
-    doc.text(file?.name.replace(".pdf", "") ?? "Summary", margin, y);
-    y += 32;
+    const baseName = file?.name.replace(/\.pdf$/i, "") ?? "Summary";
+    doc.text(baseName, margin, y); y += 32;
 
     for (const line of summary.split("\n")) {
         const trimmed = line.trim();
@@ -49,38 +61,35 @@ export function handleDownload(file: File | null, summary: string) {
 
         if (/^#{1,2}\s/.test(trimmed)) {
             checkY(28);
-            doc.setFont("helvetica", "bold");
             doc.setFontSize(13);
             doc.setTextColor(17, 24, 39);
-            doc.text(trimmed.replace(/^#{1,3}\s/, ""), margin, y);
-            y += 20;
+            writeSegments(cleanInline(trimmed.replace(/^#{1,2}\s/, "")), margin, 20);
         } else if (/^###\s/.test(trimmed)) {
             checkY(22);
-            doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.setTextColor(55, 65, 81);
-            doc.text(trimmed.replace(/^###\s/, ""), margin, y);
-            y += 16;
+            writeSegments(cleanInline(trimmed.replace(/^###\s/, "")), margin, 16);
         } else if (/^[-•*]\s/.test(trimmed)) {
-            const text = cleanInline(trimmed.replace(/^[-•*]\s/, ""));
-            const wrapped = doc.splitTextToSize(`• ${text}`, maxWidth - 12);
-            doc.setFont("helvetica", "normal");
+            const segments = cleanInline(trimmed.replace(/^[-•*]\s/, ""));
+            checkY(14);
             doc.setFontSize(10);
             doc.setTextColor(55, 65, 81);
-            writeWrapped([...wrapped], margin + 8);
+            doc.text("•", margin, y);
+            writeSegments(segments, margin + 12, 14);
         } else if (/^\d+\.\s/.test(trimmed)) {
-            const wrapped = doc.splitTextToSize(cleanInline(trimmed), maxWidth - 12);
-            doc.setFont("helvetica", "normal");
+            const segments = cleanInline(trimmed.replace(/^\d+\.\s/, ""));
+            checkY(14);
             doc.setFontSize(10);
             doc.setTextColor(55, 65, 81);
-            writeWrapped([...wrapped], margin + 8);
+            const num = trimmed.match(/^\d+\./)?.[0] ?? "1.";
+            doc.text(num, margin, y);
+            writeSegments(segments, margin + 16, 14);
         } else {
-            const clean = cleanInline(trimmed);
-            const wrapped = doc.splitTextToSize(clean, maxWidth);
-            doc.setFont("helvetica", "normal");
+            const segments = cleanInline(trimmed);
+            checkY(14);
             doc.setFontSize(10);
             doc.setTextColor(75, 85, 99);
-            writeWrapped([...wrapped], margin, 14, 4);
+            writeSegments(segments, margin, 14);
         }
     }
 

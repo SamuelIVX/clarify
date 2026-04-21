@@ -57,13 +57,13 @@ export default function DeckCard({
                         <BookOpen className="w-3.5 h-3.5" /> Study
                     </Link>
                     <DeckActions
-                        onEdit={onEdit}
+                        onChange={onEdit}
                         ariaLabel={`Edit ${deck.name}`}
                         hoverColor="indigo"
                         icon={<Pencil className="w-4 h-4" />}
                     />
                     <DeckActions
-                        onEdit={onDelete}
+                        onChange={onDelete}
                         ariaLabel={`Delete ${deck.name}`}
                         hoverColor="red"
                         icon={<Trash2 className="w-4 h-4" />}

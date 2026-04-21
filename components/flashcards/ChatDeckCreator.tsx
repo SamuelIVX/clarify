@@ -16,6 +16,8 @@ export default function ChatDeckCreator({ onCreated }: { onCreated: (deck: Flash
     const [pendingCards, setPendingCards] = useState<{ question: string; answer: string }[] | null>(null);
     const [deckName, setDeckName] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [hasSaved, setHasSaved] = useState(false);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const apiMessages = useRef<ChatMessage[]>([]);
 
@@ -79,20 +81,24 @@ export default function ChatDeckCreator({ onCreated }: { onCreated: (deck: Flash
     };
 
     const handleSaveDeck = () => {
-        if (!pendingCards) return;
+        if (!pendingCards || hasSaved) return;
+        setHasSaved(true);
+        const now = Date.now();
+
         const newDeck: FlashcardDeck = {
-            id: `deck-${Date.now()}`,
+            id: `deck-${now}`,
             name: deckName.trim() || "AI Generated Deck",
-            createdAt: Date.now(),
+            createdAt: now,
             flashcards: pendingCards.map((card, i) => ({
-                id: `${Date.now()}-${i}`,
+                id: `${now}-${i}`,
                 question: card.question,
                 answer: card.answer,
-                createdAt: Date.now(),
+                createdAt: now,
             })),
         };
         const existing = loadDecks();
         saveDecks([...existing, newDeck]);
+        setPendingCards(null);
         onCreated(newDeck);
     };
 
@@ -182,7 +188,7 @@ export default function ChatDeckCreator({ onCreated }: { onCreated: (deck: Flash
 
                     <button
                         onClick={handleSaveDeck}
-                        disabled={isLoading}
+                        disabled={isLoading || hasSaved}
                         className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         <Save className="w-4 h-4" /> Save Deck
