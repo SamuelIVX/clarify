@@ -96,6 +96,7 @@ export default function DeckCard({
                                     padding=""
                                     fontSize="font-medium"
                                 />
+
                                 <QACard
                                     type="A"
                                     description={card.answer}
