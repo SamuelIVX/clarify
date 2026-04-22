@@ -101,8 +101,8 @@ flowchart TD
 
 ### Keyboard Controls
 
-| Key       | Action                        |
-|-----------|-------------------------------|
+| Key                 | Action                        |
+|---------------------|-------------------------------|
 | W / S / Space / ↑ / ↓ | Flip card |
 | A / D / ← / → | Navigate to previous/next card |
 
