@@ -1,6 +1,6 @@
 "use client";
 import { useState, type ChangeEvent } from "react";
-import { Upload, FileText, Loader2, AlertCircle, Copy, Check, Download } from "lucide-react";
+import { Upload, FileText, AlertCircle, Copy, Check, Download } from "lucide-react";
 import { Mood, moods } from "./types";
 import { handleDownload } from "@/utils/pdfExport";
 import FileUpload from "@/components/summary/FileUpload";
