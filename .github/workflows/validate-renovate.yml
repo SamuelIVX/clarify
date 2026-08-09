@@ -32,4 +32,4 @@ jobs:
               run: npm i -g renovate@44.16.1
 
             - name: Validate config (strict)
-              run: renovate-config-validator .github/renovate.json --strict
+              run: renovate-config-validator .github/renovate.json --strict --no-global

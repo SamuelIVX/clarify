@@ -6,6 +6,10 @@ on:
     schedule:
         - cron: "00 9 * * *"
 
+concurrency:
+    group: renovate-${{ github.repository }}
+    cancel-in-progress: false
+
 permissions:
     contents: write
     pull-requests: write
@@ -28,4 +32,3 @@ jobs:
                   RENOVATE_REPOSITORIES: ${{ github.repository }}
               with:
                   renovate-version: 44.16.1
-                  configurationFile: .github/renovate.json
