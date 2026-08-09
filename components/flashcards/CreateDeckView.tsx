@@ -99,12 +99,14 @@ export default function CreateDeckView({ onCreated, onCancel }: {
             <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6 w-fit">
                 <ModeToggle
                     mode={createMode}
+                    targetMode="pdf"
                     onModeChange={setCreateMode}
                     icon={<Upload className="w-4 h-4" />}
                 />
 
                 <ModeToggle
                     mode={createMode}
+                    targetMode="chat"
                     onModeChange={setCreateMode}
                     icon={<MessageSquare className="w-4 h-4" />}
                 />
