@@ -48,7 +48,7 @@ function CrammingSession() {
     const searchParams = useSearchParams();
     const deckId = searchParams.get("deckId");
     const [initialState] = useState(() => loadInitialCrammingState(deckId));
-    const [decks] = useState<FlashcardDeck[]>(initialState.decks);
+    const [decks, setDecks] = useState<FlashcardDeck[]>(initialState.decks);
     const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(initialState.selectedDeck);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showAnswer, setShowAnswer] = useState(false);
@@ -60,6 +60,24 @@ function CrammingSession() {
     const [sessionStartTime, setSessionStartTime] = useState<number>(initialState.sessionStartTime);
     const [editingTitle, setEditingTitle] = useState(false);
     const [titleDraft, setTitleDraft] = useState("");
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            const nextState = loadInitialCrammingState(deckId);
+            setDecks(nextState.decks);
+            setSelectedDeck(nextState.selectedDeck);
+            setCurrentIndex(0);
+            setShowAnswer(false);
+            setKnownCards(new Set());
+            setUnknownCards(new Set());
+            setShowStats(false);
+            setWeakTopics([]);
+            setAnalyzingTopics(false);
+            setSessionStartTime(nextState.sessionStartTime);
+            setEditingTitle(false);
+            setTitleDraft("");
+        });
+    }, [deckId]);
 
     useEffect(() => {
         if (!selectedDeck || showStats) return;
@@ -195,17 +213,19 @@ function CrammingSession() {
     };
 
     const handleReset = () => {
+        const now = getCurrentTimestamp();
         setKnownCards(new Set());
         setUnknownCards(new Set());
         setCurrentIndex(0);
         setShowAnswer(false);
         setShowStats(false);
         setWeakTopics([]);
-        setSessionStartTime(Date.now());
+        setSessionStartTime(now);
     };
 
     const handleRetryWrongCards = () => {
         if (!selectedDeck) return;
+        const now = getCurrentTimestamp();
         setSelectedDeck(buildRetryDeck(selectedDeck, unknownCards));
         setKnownCards(new Set());
         setUnknownCards(new Set());
@@ -213,7 +233,7 @@ function CrammingSession() {
         setShowAnswer(false);
         setShowStats(false);
         setWeakTopics([]);
-        setSessionStartTime(Date.now());
+        setSessionStartTime(now);
     };
 
     const saveDeckTitle = (newName: string) => {
@@ -221,6 +241,9 @@ function CrammingSession() {
         if (!trimmed || !selectedDeck) { setEditingTitle(false); return; }
         const updated = { ...selectedDeck, name: trimmed };
         setSelectedDeck(updated);
+        setDecks(prev =>
+            prev.map(deck => deck.id === updated.id ? { ...deck, name: trimmed } : deck)
+        );
         try {
             const all: FlashcardDeck[] = JSON.parse(localStorage.getItem("flashcard_decks") || "[]");
             localStorage.setItem("flashcard_decks", JSON.stringify(all.map(d => d.id === updated.id ? updated : d)));
