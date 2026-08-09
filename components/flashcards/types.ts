@@ -18,6 +18,7 @@ export interface DeckCardProps {
 
 export interface ModeToggleProps {
     mode: CreateMode;
+    targetMode: CreateMode;
     onModeChange: (mode: CreateMode) => void;
     icon: ReactNode;
 }
