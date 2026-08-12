@@ -20,6 +20,22 @@ Rules:
 - Answers should be accurate and concise (1-3 sentences)
 - Cover a good spread of the topic — don't cluster around one sub-topic`
 
+const ALLOWED_ROLES = new Set(['user'])
+const MAX_MESSAGES = 30
+
+function sanitizeMessages(messages) {
+  return messages
+    .filter(m =>
+      m && typeof m === 'object' &&
+      ALLOWED_ROLES.has(m.role) &&
+      typeof m.content === 'string' &&
+      m.content.trim().length > 0 &&
+      m.content.length <= 8000
+    )
+    .slice(-MAX_MESSAGES)
+    .map(m => ({ role: m.role, content: m.content }))
+}
+
 export async function POST(req) {
   try {
     const { messages } = await req.json()
@@ -28,12 +44,17 @@ export async function POST(req) {
       return NextResponse.json({ error: 'A message is required.' }, { status: 400 })
     }
 
+    const cleanMessages = sanitizeMessages(messages)
+    if (cleanMessages.length === 0) {
+      return NextResponse.json({ error: 'A message is required.' }, { status: 400 })
+    }
+
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const response = await client.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 2000,
       system: SYSTEM_PROMPT,
-      messages,
+      messages: cleanMessages,
     })
 
     const content = response.content[0].text
