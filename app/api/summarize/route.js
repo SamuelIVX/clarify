@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { escapeXml } from '../../../lib/escapeXml'
 
 const moodPrompts = {
   tired: `Summarize the provided document in max 5 bullet points.
@@ -39,11 +40,11 @@ export async function POST(req) {
       model: "claude-opus-4-6",
       max_tokens: 1000,
       system: `${moodPrompts[mood]}\n\n${SYSTEM_INSTRUCTION}`,
-      messages: [{ role: "user", content: `<document>${text.slice(0, MAX_DOCUMENT_CHARS)}</document>` }]
+      messages: [{ role: "user", content: `<document>${escapeXml(text.slice(0, MAX_DOCUMENT_CHARS))}</document>` }]
     })
 
     const summary = message.content[0].text
-    if (typeof summary !== 'string' || summary.length === 0) {
+    if (typeof summary !== 'string' || summary.trim().length === 0) {
       throw new Error('AI response did not contain a summary')
     }
     return NextResponse.json({ summary })

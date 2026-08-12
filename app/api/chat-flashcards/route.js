@@ -20,7 +20,7 @@ Rules:
 - Answers should be accurate and concise (1-3 sentences)
 - Cover a good spread of the topic — don't cluster around one sub-topic`
 
-const ALLOWED_ROLES = new Set(['user', 'assistant'])
+const ALLOWED_ROLES = new Set(['user'])
 const MAX_MESSAGES = 30
 
 function sanitizeMessages(messages) {

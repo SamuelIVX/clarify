@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { escapeXml } from '../../../lib/escapeXml'
 
 const flashcardPrompts = {
   tired: `Create 5 simple flashcards from this content. 
@@ -43,14 +44,19 @@ export async function POST(req) {
       model: "claude-opus-4-6",
       max_tokens: 1000,
       system: `${flashcardPrompts[mood]}\n\n${SYSTEM_INSTRUCTION}`,
-      messages: [{ role: "user", content: `<document>${text.slice(0, MAX_DOCUMENT_CHARS)}</document>` }]
+      messages: [{ role: "user", content: `<document>${escapeXml(text.slice(0, MAX_DOCUMENT_CHARS))}</document>` }]
     })
 
     const raw = message.content[0].text
     const jsonMatch = raw.match(/\[[\s\S]*\]/)
     if (!jsonMatch) throw new Error("AI response did not contain a valid JSON array")
     const flashcards = JSON.parse(jsonMatch[0])
-    if (!Array.isArray(flashcards)) throw new Error("AI response was not a JSON array")
+    if (!Array.isArray(flashcards) || flashcards.length === 0) throw new Error("AI response was not a JSON array")
+    if (!flashcards.every(card =>
+      card && typeof card === 'object' &&
+      typeof card.question === 'string' && card.question.trim().length > 0 &&
+      typeof card.answer === 'string' && card.answer.trim().length > 0
+    )) throw new Error("AI response flashcards must have non-empty string question and answer")
     return NextResponse.json({ flashcards })
   } catch (error) {
     console.error('[/api/flashcards] request failed', {
