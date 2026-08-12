@@ -28,6 +28,7 @@ describe("FlashcardsPage", () => {
         render(<FlashcardsPage />);
         expect(screen.getByRole("heading", { name: "Chemistry Basics" })).toBeInTheDocument();
         expect(screen.getByText("1 deck saved")).toBeInTheDocument();
+        expect(screen.getByText("2 cards")).toBeInTheDocument();
     });
 
     it("opens the create view from the new deck button", async () => {

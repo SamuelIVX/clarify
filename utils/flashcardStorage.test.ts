@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { loadDecks, saveDecks } from "./flashcardStorage";
 import type { FlashcardDeck } from "../app/flashcards/types";
 
@@ -35,5 +35,14 @@ describe("flashcardStorage", () => {
     it("returns an empty list when the stored value is corrupt JSON", () => {
         localStorage.setItem("flashcard_decks", "{not valid json");
         expect(loadDecks()).toEqual([]);
+    });
+
+    it("returns false and leaves storage untouched when the write fails", () => {
+        const spy = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+            throw new Error("QuotaExceededError");
+        });
+        expect(saveDecks([deck])).toBe(false);
+        expect(localStorage.getItem("flashcard_decks")).toBeNull();
+        spy.mockRestore();
     });
 });
