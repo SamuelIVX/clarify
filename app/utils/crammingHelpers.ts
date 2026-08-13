@@ -9,6 +9,7 @@ import type { FlashcardDeck } from "./aiApi";
  * @param known - ids the user marked as known.
  * @param unknown - ids the user marked as unknown.
  * @param totalCards - total cards in the session.
+ * @returns Whether all cards have been marked known or unknown.
  */
 export function checkIfComplete(
     known: Set<string>,
@@ -31,6 +32,7 @@ export function getSessionDuration(sessionStartTime: number): number {
  * Percent of cards marked known, rounded to a whole number.
  * @param knownSize - number of known cards.
  * @param totalCards - total cards in the session.
+ * @returns Rounded percent of known cards.
  */
 export function getCorrectPercentage(knownSize: number, totalCards: number): number {
     return Math.round((knownSize / totalCards) * 100);
@@ -41,6 +43,7 @@ export function getCorrectPercentage(knownSize: number, totalCards: number): num
  * retry of wrong answers. Non-mutating.
  * @param deck - the source deck.
  * @param unknownCards - card ids to carry into the retry deck.
+ * @returns A copy of the deck containing only cards whose ids are unknown.
  */
 export function buildRetryDeck(deck: FlashcardDeck, unknownCards: Set<string>): FlashcardDeck {
     return {
@@ -55,6 +58,7 @@ export function buildRetryDeck(deck: FlashcardDeck, unknownCards: Set<string>): 
  * @param cardId - the card's id (undefined for unclassified cards).
  * @param knownCards - ids marked known.
  * @param unknownCards - ids marked unknown.
+ * @returns Tailwind border classes for the card's current classification.
  */
 export function getCardBorderClass(
     cardId: string | undefined,

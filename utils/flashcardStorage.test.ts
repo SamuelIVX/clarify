@@ -1,5 +1,6 @@
 /**
- * localStorage flashcard persistence tests (load/save, corrupt JSON, SSR guard).
+ * localStorage flashcard persistence tests covering load/save, overwrite,
+ * invalid stored shape, corrupt JSON, and write failures.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { loadDecks, saveDecks } from "./flashcardStorage";

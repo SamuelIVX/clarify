@@ -1,8 +1,9 @@
 /**
  * POST /api/flashcards — generates a mood-tuned flashcard set from pasted
  * document text. Mood is allowlisted; untrusted content is wrapped in
- * <document> tags with an isolation instruction and XML-escaped to prevent
- * injection (LLM01 hardening). SECURITY: requires ANTHROPIC_API_KEY in env.
+ * <document> tags with an isolation instruction and XML-escaped to reduce
+ * delimiter-breakout and prompt-injection risk (LLM01 hardening). SECURITY:
+ * requires ANTHROPIC_API_KEY in env.
  */
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
@@ -36,11 +37,13 @@ const MAX_DOCUMENT_CHARS = 20000
 
 /**
  * Handles mood-based flashcard generation.
- * @param {Request} req - Body: { text: string, mood: keyof flashcardPrompts }.
+ * @param {Request} req - Body: { text: string, mood:
+ *   'tired'|'stressed'|'annoyed'|'curious' }.
  * @returns {Promise<NextResponse>} { flashcards: Array<{ question, answer }> }
  *   or an error JSON with status 400/500.
- * @throws Parses JSON via regex — throws if the model emits prose around the
- *   array; the parsed shape is validated before returning.
+ * @throws Extracts a bracketed substring with a regex, parses it as JSON, and
+ *   throws if no array is present, JSON is invalid, the array is empty, or any
+ *   card has an invalid shape.
  */
 export async function POST(req) {
   try {

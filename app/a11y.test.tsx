@@ -1,5 +1,5 @@
 /**
- * Landing, summary, and flashcards page accessibility checks (axe).
+ * Landing-page accessibility check using axe.
  */
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";

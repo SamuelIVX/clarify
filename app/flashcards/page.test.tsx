@@ -1,5 +1,6 @@
 /**
- * Flashcards page tests (deck list / create / edit interactions with a mocked localStorage).
+ * Flashcards page tests covering empty state, saved deck rendering, and
+ * navigation into the create-deck view with mocked localStorage.
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";

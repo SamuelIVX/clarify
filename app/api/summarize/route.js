@@ -32,7 +32,8 @@ const MAX_DOCUMENT_CHARS = 20000
 
 /**
  * Handles mood-based summarization.
- * @param {Request} req - Body: { text: string, mood: keyof moodPrompts }.
+ * @param {Request} req - Body: { text: string, mood:
+ *   'tired'|'stressed'|'annoyed'|'curious' }.
  * @returns {Promise<NextResponse>} { summary: string } or an error JSON with
  *   status 400/500.
  * @throws A blank model response throws and becomes a generic 500.

@@ -1,5 +1,6 @@
 /**
- * Summary page tests (upload validation, mood selection, copy/download) with mocked fetch.
+ * Summary page tests covering initial rendering, non-PDF validation, and
+ * mood-selector display after selecting a valid PDF.
  */
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";

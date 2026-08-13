@@ -3,7 +3,8 @@
  * chat-flashcards flow. Sanitizes client messages to the `user` role only
  * (blocks forged system/assistant turns), caps length/count, and parses the
  * `---FLASHCARDS---` delimiter convention. SECURITY: requires
- * ANTHROPIC_API_KEY in env; only a user-provided message is ever sent up.
+ * ANTHROPIC_API_KEY in env; only sanitized user-role messages are forwarded,
+ * up to MAX_MESSAGES.
  */
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
@@ -31,11 +32,13 @@ const ALLOWED_ROLES = new Set(['user'])
 const MAX_MESSAGES = 30
 
 /**
- * Drops any message that isn't a non-empty user string (≤8000 chars) and keeps
- * only the most recent MAX_MESSAGES. Guards against injected system/assistant
- * turns and oversized or malformed payloads.
- * @param {Array} messages - Raw client message list.
- * @returns {Array<{ role: string, content: string }>} Sanitized messages.
+ * Drops any message that isn't a non-empty user-role object with string content
+ * (≤8000 chars) and keeps only the most recent MAX_MESSAGES. Guards against
+ * injected system/assistant turns and oversized or malformed payloads.
+ * @param {Array<{ role: string, content: string }>} messages - Raw client
+ *   message objects.
+ * @returns {Array<{ role: 'user', content: string }>} Sanitized user-message
+ *   objects.
  */
 function sanitizeMessages(messages) {
   return messages

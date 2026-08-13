@@ -21,7 +21,8 @@ const MAX_CARD_CHARS = 8000
  * @param {Request} req - Body: { flashcards: Array<{ question, answer }> }.
  * @returns {Promise<NextResponse>} { topics: string[] } (3-5 items) or an
  *   error JSON with status 400/500.
- * @throws Parses JSON via regex — throws if the model adds prose to the array.
+ * @throws Extracts a bracketed substring with a regex, parses it as JSON, and
+ *   throws if no array is present, JSON is invalid, or the shape is wrong.
  */
 export async function POST(req) {
   try {
