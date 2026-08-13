@@ -5,7 +5,7 @@ import { QACardProps } from "./types"
 
 /**
  * Inline Q/A label row with accent colors.
- * @param type - Short label (e.g. "Q:" / "A:").
+ * @param type - Short label (`"Q"` or `"A"`).
  * @param description - Question or answer text.
  * @param color - Tailwind class bags for span/accent/text.
  * @param padding - Wrapper padding classes.

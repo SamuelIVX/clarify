@@ -10,7 +10,7 @@ import { jsPDF } from "jspdf";
  * (or "Summary") as the title and download stem.
  * @param file - Source PDF used only for naming; may be null.
  * @param summary - Markdown-ish summary text to render.
- * @returns void — side effect: starts a browser download of `*-summary.pdf`.
+ * @returns Side effect only: starts a browser download of `*-summary.pdf`.
  * @example
  * handleDownload(pdfFile, "## Overview\n- Point one\n- Point two");
  * // downloads e.g. "notes-summary.pdf"

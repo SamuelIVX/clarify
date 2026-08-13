@@ -64,6 +64,8 @@ export function buildRetryDeck(deck: FlashcardDeck, unknownCards: Set<string>): 
  * @param knownCards - ids marked known.
  * @param unknownCards - ids marked unknown.
  * @returns Tailwind border classes for the card's current classification.
+ * @example
+ * getCardBorderClass("c1", new Set(["c1"]), new Set()) // => green border classes
  */
 export function getCardBorderClass(
     cardId: string | undefined,

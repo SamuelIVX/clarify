@@ -15,6 +15,7 @@ import { FeatureCardProps } from "./types";
  * @param description - supporting copy.
  * @param hover_border - Tailwind border class on hover.
  * @param hover_bg - Tailwind background class on hover.
+ * @returns The linked feature card.
  */
 export function FeatureCard({ page, icon, title, description, hover_border, hover_bg }: FeatureCardProps) {
     return (
