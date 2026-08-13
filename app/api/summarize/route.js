@@ -1,3 +1,9 @@
+/**
+ * POST /api/summarize — mood-tuned document summarization. Mood is
+ * allowlisted; untrusted content is wrapped in <document> tags with an
+ * isolation instruction and XML-escaped (LLM01 hardening). Input is truncated
+ * to MAX_DOCUMENT_CHARS. SECURITY: requires ANTHROPIC_API_KEY in env.
+ */
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { escapeXml } from '../../../lib/escapeXml'
@@ -24,6 +30,13 @@ document.`
 
 const MAX_DOCUMENT_CHARS = 20000
 
+/**
+ * Handles mood-based summarization.
+ * @param {Request} req - Body: { text: string, mood: keyof moodPrompts }.
+ * @returns {Promise<NextResponse>} { summary: string } or an error JSON with
+ *   status 400/500.
+ * @throws A blank model response throws and becomes a generic 500.
+ */
 export async function POST(req) {
   try {
     const { text, mood } = await req.json()

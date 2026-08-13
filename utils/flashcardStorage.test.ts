@@ -1,3 +1,6 @@
+/**
+ * localStorage flashcard persistence tests (load/save, corrupt JSON, SSR guard).
+ */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { loadDecks, saveDecks } from "./flashcardStorage";
 import type { FlashcardDeck } from "../app/flashcards/types";

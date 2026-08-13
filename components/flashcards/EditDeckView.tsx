@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * Deck editing view — rename the deck and add/update/delete its flashcards,
+ * with inline confirmation for deletions.
+ */
+
 import { useState } from "react";
 import { Check, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";

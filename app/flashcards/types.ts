@@ -1,3 +1,7 @@
+/**
+ * Flashcard-domain types, view/mode discriminants, and the mood option list
+ * used across the Flashcards create/edit views.
+ */
 export interface ChatMessage {
     role: "user" | "assistant";
     content: string;

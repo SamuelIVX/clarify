@@ -1,3 +1,6 @@
+/**
+ * Shared props for the summary-page subcomponents.
+ */
 import type { ReactNode } from "react";
 export interface FileUploadProps {
     title: string;

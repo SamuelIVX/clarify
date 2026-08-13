@@ -1,4 +1,10 @@
 'use client'
+/**
+ * Cramming session page — study a selected flashcard deck card-by-card, mark
+ * cards known/unknown, and get an end-of-session stats screen with AI-analyzed
+ * weak topics. Keyboard-driven (arrows/WASD). Reads decks from
+ * localStorage("flashcard_decks").
+ */
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Brain, ChevronLeft, ChevronRight, RotateCcw, Check, X, TrendingUp, TrendingDown, Target, Loader2, Pencil } from "lucide-react";
@@ -44,6 +50,12 @@ function getCurrentTimestamp(): number {
     return Date.now();
 }
 
+/**
+ * The interactive cramming session component — manages deck selection, card
+ * navigation, known/unknown marking, weak-topic analysis, and session stats.
+ * Re-hydrates its initial state from localStorage whenever the deckId query
+ * param changes.
+ */
 function CrammingSession() {
     const searchParams = useSearchParams();
     const deckId = searchParams.get("deckId");
@@ -675,6 +687,10 @@ function CrammingSession() {
     );
 }
 
+/**
+ * Entry point — wraps CrammingSession in <Suspense> because it reads
+ * useSearchParams.
+ */
 export default function CrammingPage() {
     return (
         <Suspense fallback={null}>

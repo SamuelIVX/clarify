@@ -1,3 +1,6 @@
+/**
+ * API route tests for the AI endpoints (analyze-topics, chat-flashcards, summarize, flashcards) with a constructor-compatible Anthropic mock.
+ */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { messagesCreate, AnthropicMock } = vi.hoisted(() => {

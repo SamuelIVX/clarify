@@ -1,3 +1,10 @@
+/**
+ * POST /api/chat-flashcards — conversational flashcard generation via the
+ * chat-flashcards flow. Sanitizes client messages to the `user` role only
+ * (blocks forged system/assistant turns), caps length/count, and parses the
+ * `---FLASHCARDS---` delimiter convention. SECURITY: requires
+ * ANTHROPIC_API_KEY in env; only a user-provided message is ever sent up.
+ */
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -23,6 +30,13 @@ Rules:
 const ALLOWED_ROLES = new Set(['user'])
 const MAX_MESSAGES = 30
 
+/**
+ * Drops any message that isn't a non-empty user string (≤8000 chars) and keeps
+ * only the most recent MAX_MESSAGES. Guards against injected system/assistant
+ * turns and oversized or malformed payloads.
+ * @param {Array} messages - Raw client message list.
+ * @returns {Array<{ role: string, content: string }>} Sanitized messages.
+ */
 function sanitizeMessages(messages) {
   return messages
     .filter(m =>
@@ -36,6 +50,12 @@ function sanitizeMessages(messages) {
     .map(m => ({ role: m.role, content: m.content }))
 }
 
+/**
+ * Handles the chat-based flashcard flow.
+ * @param {Request} req - Body: { messages: Array }.
+ * @returns {Promise<NextResponse>} { message, flashcards|null } or an error
+ *   JSON with status 400/500.
+ */
 export async function POST(req) {
   try {
     const { messages } = await req.json()

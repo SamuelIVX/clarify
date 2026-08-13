@@ -1,3 +1,7 @@
+/**
+ * Small icon-button group for per-deck actions (edit/delete), colorized by
+ * the `hoverColor` prop.
+ */
 import { DeckActionProps } from "./types"
 
 export default function DeckActions({ onChange, ariaLabel, hoverColor, icon }: DeckActionProps) {

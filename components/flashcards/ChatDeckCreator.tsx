@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * Conversational deck creator — lets the user describe a topic in chat and
+ * receives AI-generated flashcards via /api/chat-flashcards, then saves the
+ * resulting deck to localStorage.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Save, Send } from "lucide-react";
 import { ChatMessage, FlashcardDeck } from "@/app/flashcards/types";

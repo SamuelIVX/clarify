@@ -1,5 +1,15 @@
+/**
+ * Pure helper functions for the cramming (study-session) flow — completion,
+ * timing, scoring, retry-deck building, and card/grade styling.
+ */
 import type { FlashcardDeck } from "./aiApi";
 
+/**
+ * True once every card has been classified as known or unknown.
+ * @param known - ids the user marked as known.
+ * @param unknown - ids the user marked as unknown.
+ * @param totalCards - total cards in the session.
+ */
 export function checkIfComplete(
     known: Set<string>,
     unknown: Set<string>,
@@ -8,14 +18,30 @@ export function checkIfComplete(
     return known.size + unknown.size === totalCards;
 }
 
+/**
+ * Seconds elapsed since the session start.
+ * @param sessionStartTime - epoch ms when the session began; 0 = not started.
+ * @returns Whole seconds elapsed, or 0 if the session never started.
+ */
 export function getSessionDuration(sessionStartTime: number): number {
     return sessionStartTime ? Math.floor((Date.now() - sessionStartTime) / 1000) : 0;
 }
 
+/**
+ * Percent of cards marked known, rounded to a whole number.
+ * @param knownSize - number of known cards.
+ * @param totalCards - total cards in the session.
+ */
 export function getCorrectPercentage(knownSize: number, totalCards: number): number {
     return Math.round((knownSize / totalCards) * 100);
 }
 
+/**
+ * Builds a new deck containing only the unknown cards, renamed to signal a
+ * retry of wrong answers. Non-mutating.
+ * @param deck - the source deck.
+ * @param unknownCards - card ids to carry into the retry deck.
+ */
 export function buildRetryDeck(deck: FlashcardDeck, unknownCards: Set<string>): FlashcardDeck {
     return {
         ...deck,
@@ -24,6 +50,12 @@ export function buildRetryDeck(deck: FlashcardDeck, unknownCards: Set<string>): 
     };
 }
 
+/**
+ * Tailwind border classes for a card's known / unknown / neutral state.
+ * @param cardId - the card's id (undefined for unclassified cards).
+ * @param knownCards - ids marked known.
+ * @param unknownCards - ids marked unknown.
+ */
 export function getCardBorderClass(
     cardId: string | undefined,
     knownCards: Set<string>,
@@ -34,6 +66,11 @@ export function getCardBorderClass(
     return "border-gray-200 hover:border-indigo-300";
 }
 
+/**
+ * Styling + copy for the session end-of-round grade card.
+ * @param correctPercentage - rounded percent of cards marked known.
+ * @returns Tailwind classes, title, and message bucket (90+, 70-89, else).
+ */
 export function getGradeInfo(correctPercentage: number): {
     bg: string;
     titleColor: string;

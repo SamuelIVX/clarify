@@ -1,3 +1,7 @@
+/**
+ * Static upload-prompt card (title/description/icon) shown before a file is
+ * chosen.
+ */
 import { FileUploadProps } from "./types";
 
 export default function FileUpload({ title, description, icon }: FileUploadProps) {

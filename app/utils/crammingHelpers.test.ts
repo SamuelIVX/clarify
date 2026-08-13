@@ -1,3 +1,6 @@
+/**
+ * Unit tests for the cramming helper functions (completion, scoring, retry deck, grade info).
+ */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
     checkIfComplete,

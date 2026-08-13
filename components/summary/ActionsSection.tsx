@@ -1,3 +1,6 @@
+/**
+ * Post-summary action row — a "Summarize Another PDF" reset button.
+ */
 export default function ActionsSection({ handleReset }: { handleReset: () => void }) {
     return (
         <div className="flex justify-center">

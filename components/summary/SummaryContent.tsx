@@ -1,3 +1,6 @@
+/**
+ * Scrollable wrapper that hosts the rendered summary inside a styled card.
+ */
 import RenderSummary from "./RenderSummary";
 
 export default function SummaryContent({ summary }: { summary: string }) {

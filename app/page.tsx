@@ -1,8 +1,21 @@
 'use client'
+/**
+ * Landing page — hero plus feature cards linking to Flashcards, Summary, and
+ * Cramming.
+ */
 import Link from "next/link";
 import { BookOpen, Brain, FileText } from "lucide-react";
 import { FeatureCardProps } from "./types";
 
+/**
+ * A single landing-page feature card linking to a product page.
+ * @param page - target route.
+ * @param icon - leading icon node.
+ * @param title - card heading.
+ * @param description - supporting copy.
+ * @param hover_border - Tailwind border class on hover.
+ * @param hover_bg - Tailwind background class on hover.
+ */
 export function FeatureCard({ page, icon, title, description, hover_border, hover_bg }: FeatureCardProps) {
     return (
         <Link

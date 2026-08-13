@@ -1,3 +1,6 @@
+/**
+ * Inline Q/A label row (e.g. "Q:", "A:") with per-type accent colors.
+ */
 import { QACardProps } from "./types"
 
 export default function QACard({ type, description, color, padding, fontSize }: QACardProps) {

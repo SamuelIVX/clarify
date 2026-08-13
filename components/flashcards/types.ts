@@ -1,3 +1,6 @@
+/**
+ * Shared props for the flashcards deck-card, deck-action, and Q/A subcomponents.
+ */
 import { FlashcardDeck } from "@/app/flashcards/types";
 import { CreateMode } from "@/app/flashcards/types";
 import { ReactNode } from "react";
