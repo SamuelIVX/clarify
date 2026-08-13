@@ -1,6 +1,7 @@
 /**
  * Reusable upload/status card that renders caller-provided icon, title, and
- * description for pre-selection and selected-file states.
+ * description for pre-selection and selected-file states, including selected
+ * file name and size when those are passed in the description.
  */
 import { FileUploadProps } from "./types";
 
