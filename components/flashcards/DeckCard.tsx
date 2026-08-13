@@ -9,6 +9,16 @@ import { DeckCardProps } from "./types";
 import DeckActions from "./DeckActions";
 import QACard from "./QACard";
 
+/**
+ * Expandable deck row with edit/delete actions and a cramming link.
+ * @param deck - The deck to render.
+ * @param accent - Border/icon color classes for this list position.
+ * @param isExpanded - Whether Q&A cards are visible.
+ * @param onToggleExpand - Toggles the expanded state.
+ * @param onEdit - Opens the edit view for this deck.
+ * @param onDelete - Requests deletion of this deck.
+ * @returns The deck card.
+ */
 export default function DeckCard({
     deck,
     accent,

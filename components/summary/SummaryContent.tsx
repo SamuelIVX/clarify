@@ -3,6 +3,11 @@
  */
 import RenderSummary from "./RenderSummary";
 
+/**
+ * Scrollable card that hosts the rendered summary.
+ * @param summary - Raw model summary text.
+ * @returns The summary card wrapper.
+ */
 export default function SummaryContent({ summary }: { summary: string }) {
     return (
         <div className="bg-white rounded-lg shadow border border-gray-200">

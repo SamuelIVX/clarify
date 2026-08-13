@@ -5,6 +5,13 @@
 import { useEffect, useRef } from "react";
 import { Trash2 } from "lucide-react";
 
+/**
+ * Modal that confirms a destructive delete before running it.
+ * @param message - Confirmation copy shown to the user.
+ * @param onConfirm - Invoked when the user confirms.
+ * @param onCancel - Invoked on cancel or Escape.
+ * @returns The confirmation dialog overlay.
+ */
 export default function ConfirmDeleteModal({ message, onConfirm, onCancel }: {
     message: string;
     onConfirm: () => void;

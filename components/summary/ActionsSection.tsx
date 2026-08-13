@@ -1,6 +1,12 @@
 /**
  * Post-summary action row — a "Summarize Another PDF" reset button.
  */
+
+/**
+ * Renders the reset control after a summary is shown.
+ * @param handleReset - Clears the current summary and returns to upload.
+ * @returns The action row.
+ */
 export default function ActionsSection({ handleReset }: { handleReset: () => void }) {
     return (
         <div className="flex justify-center">

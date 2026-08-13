@@ -1,5 +1,20 @@
+/**
+ * Client-side PDF export for AI summaries via jspdf. Renders markdown-ish
+ * headings, bold spans, bullets, and numbered lines onto an A4 document and
+ * triggers a browser download.
+ */
 import { jsPDF } from "jspdf";
 
+/**
+ * Builds a summary PDF and downloads it. Uses the uploaded PDF's basename
+ * (or "Summary") as the title and download stem.
+ * @param file - Source PDF used only for naming; may be null.
+ * @param summary - Markdown-ish summary text to render.
+ * @returns Side effect only: starts a browser download of `*-summary.pdf`.
+ * @example
+ * handleDownload(pdfFile, "## Overview\n- Point one\n- Point two");
+ * // downloads e.g. "notes-summary.pdf"
+ */
 export function handleDownload(file: File | null, summary: string) {
     type TextSegment = { text: string; bold: boolean };
 

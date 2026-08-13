@@ -4,6 +4,14 @@
  */
 import { DeckActionProps } from "./types"
 
+/**
+ * Icon button for a single deck action (edit/delete).
+ * @param onChange - Click handler.
+ * @param ariaLabel - Accessible name for the control.
+ * @param hoverColor - Hover accent key (`indigo` | `red`).
+ * @param icon - Icon node to render inside the button.
+ * @returns The action button.
+ */
 export default function DeckActions({ onChange, ariaLabel, hoverColor, icon }: DeckActionProps) {
 
     const hoverClasses: Record<string, string> = {

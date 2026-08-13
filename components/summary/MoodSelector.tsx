@@ -14,6 +14,14 @@ interface MoodSelectorProps {
   onGenerate: () => void;
 }
 
+/**
+ * Mood grid plus the generate-summary CTA.
+ * @param moods - Available mood options with labels/descriptions.
+ * @param mood - Currently selected mood.
+ * @param onMoodChange - Updates the selected mood.
+ * @param onGenerate - Starts summary generation.
+ * @returns The mood picker and generate button.
+ */
 export default function MoodSelector({ moods, mood, onMoodChange, onGenerate }: MoodSelectorProps) {
   return (
     <div className="mt-6">

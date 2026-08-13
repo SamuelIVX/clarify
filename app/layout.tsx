@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
 /**
  * Root layout — sets the global font (Geist), page metadata, and the app
  * navbar around all routes.
  */
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   description: "Generate flashcards from your notes with the power of AI.",
 };
 
+/**
+ * Wraps every route with fonts + the shared navbar.
+ * @param children - The active page content.
+ * @returns The HTML shell for the app.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

@@ -16,6 +16,10 @@ const navItems = [
     { label: "Summary", href: "/summary", icon: FileText },
 ];
 
+/**
+ * Sticky top nav for in-app routes; hidden on the landing page.
+ * @returns The header, or null on `/`.
+ */
 export function Navbar() {
     const pathname = usePathname();
     const [menuOpen, setMenuOpen] = useState(false);

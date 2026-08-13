@@ -2,6 +2,12 @@
  * Renders the AI summary text, parsing **bold** spans and one-line
  * bullet/prefixed lines into structured JSX.
  */
+
+/**
+ * Turns markdown-ish summary text into structured JSX.
+ * @param summary - Raw model summary (headings/bullets/bold).
+ * @returns The rendered summary fragment tree.
+ */
 export default function RenderSummary({ summary }: { summary: string }) {
     const lines = summary.split("\n");
     const elements: React.ReactNode[] = [];

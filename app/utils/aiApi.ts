@@ -22,6 +22,9 @@ export interface FlashcardDeck {
  * @param flashcards - The flashcards the student got wrong.
  * @returns A list of 3-5 concise weak-topic strings.
  * @throws {Error} If the API returns a non-2xx response.
+ * @example
+ * const topics = await analyzeWeakTopics([{ id: "1", question: "Q", answer: "A", createdAt: 0 }]);
+ * // => ["mitosis", "cell cycle", ...]
  */
 export async function analyzeWeakTopics(flashcards: Flashcard[]): Promise<string[]> {
     const res = await fetch('/api/analyze-topics', {

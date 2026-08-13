@@ -13,6 +13,11 @@ import { loadDecks, saveDecks } from "@/utils/flashcardStorage";
 
 const CHAT_GREETING = "Hi! What topic would you like to create flashcards for? Tell me the subject and any details like the level of depth or specific areas to focus on, and I'll generate a set for you.";
 
+/**
+ * Chat UI that turns a topic conversation into a saved flashcard deck.
+ * @param onCreated - Called with the new deck after a successful save.
+ * @returns The conversational deck-creator panel.
+ */
 export default function ChatDeckCreator({ onCreated }: { onCreated: (deck: FlashcardDeck) => void }) {
     const [messages, setMessages] = useState<ChatMessage[]>([
         { role: "assistant", content: CHAT_GREETING },

@@ -10,6 +10,13 @@ import { Check, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import { Flashcard, FlashcardDeck } from "@/app/flashcards/types";
 
+/**
+ * Inline editor for a deck's name and flashcards.
+ * @param deck - The deck being edited.
+ * @param onSave - Called with the updated deck.
+ * @param onCancel - Called when the user exits without saving.
+ * @returns The edit-deck panel.
+ */
 export default function EditDeckView({ deck, onSave, onCancel }: {
     deck: FlashcardDeck;
     onSave: (updated: FlashcardDeck) => void;
