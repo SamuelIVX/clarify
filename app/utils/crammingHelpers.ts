@@ -33,6 +33,8 @@ export function getSessionDuration(sessionStartTime: number): number {
  * @param knownSize - number of known cards.
  * @param totalCards - total cards in the session.
  * @returns Rounded percent of known cards.
+ * @example
+ * getCorrectPercentage(7, 10) // => 70
  */
 export function getCorrectPercentage(knownSize: number, totalCards: number): number {
     return Math.round((knownSize / totalCards) * 100);
@@ -44,6 +46,9 @@ export function getCorrectPercentage(knownSize: number, totalCards: number): num
  * @param deck - the source deck.
  * @param unknownCards - card ids to carry into the retry deck.
  * @returns A copy of the deck containing only cards whose ids are unknown.
+ * @example
+ * buildRetryDeck(deck, new Set(["card-2"]));
+ * // => { ...deck, name: "<name> - Review Wrong Cards", flashcards: [card-2] }
  */
 export function buildRetryDeck(deck: FlashcardDeck, unknownCards: Set<string>): FlashcardDeck {
     return {
@@ -74,6 +79,9 @@ export function getCardBorderClass(
  * Styling + copy for the session end-of-round grade card.
  * @param correctPercentage - rounded percent of cards marked known.
  * @returns Tailwind classes, title, and message bucket (90+, 70-89, else).
+ * @example
+ * getGradeInfo(95).title // => "🎉 Excellent Work!"
+ * getGradeInfo(50).title // => "💪 Keep Practicing!"
  */
 export function getGradeInfo(correctPercentage: number): {
     bg: string;

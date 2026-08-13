@@ -3,6 +3,11 @@
  */
 import { Loader2 } from "lucide-react";
 
+/**
+ * Two-step progress indicator for PDF extract then summarize.
+ * @param stage - Which step is currently active.
+ * @returns The processing status panel.
+ */
 export default function ProcessingPDF({ stage }: { stage: "extracting" | "summarizing" }) {
     return (
         <div className="mt-6 bg-pink-50 border border-pink-200 rounded-lg p-6">

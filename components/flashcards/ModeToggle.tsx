@@ -3,6 +3,14 @@
  */
 import { ModeToggleProps } from "./types"
 
+/**
+ * Segment control button for PDF vs chat create modes.
+ * @param mode - Currently active create mode.
+ * @param targetMode - Mode this button selects.
+ * @param onModeChange - Called with `targetMode` on click.
+ * @param icon - Leading icon for the button.
+ * @returns The mode toggle button.
+ */
 export default function ModeToggle({ mode, targetMode, onModeChange, icon }: ModeToggleProps) {
     const isActive = mode === targetMode;
 

@@ -23,6 +23,8 @@ const MAX_CARD_CHARS = 8000
  *   error JSON with status 400/500.
  * @throws Extracts a bracketed substring with a regex, parses it as JSON, and
  *   throws if no array is present, JSON is invalid, or the shape is wrong.
+ * @example
+ * // POST { flashcards: [{ question: "Q", answer: "A" }] } → { topics: [...] }
  */
 export async function POST(req) {
   try {

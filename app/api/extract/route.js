@@ -14,6 +14,8 @@ export const maxDuration = 60
  * @returns {Promise<NextResponse>} { text: string } or an error JSON with
  *   status 400/422/500.
  * @throws A rejected read/parse produces a 500 with no internals exposed.
+ * @example
+ * // multipart POST with field name "pdf" → { text: "..." }
  */
 export async function POST(req) {
   try {

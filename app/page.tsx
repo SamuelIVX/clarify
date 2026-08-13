@@ -35,6 +35,10 @@ export function FeatureCard({ page, icon, title, description, hover_border, hove
     )
 }
 
+/**
+ * Landing page with hero and three feature cards.
+ * @returns The home page layout.
+ */
 export default function Home() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 bg-white">

@@ -5,6 +5,13 @@
  */
 import { FileUploadProps } from "./types";
 
+/**
+ * Presentational upload/status card driven by caller-supplied copy and icon.
+ * @param title - Primary status line.
+ * @param description - Secondary status / file metadata line.
+ * @param icon - Leading icon node.
+ * @returns The upload status card body.
+ */
 export default function FileUpload({ title, description, icon }: FileUploadProps) {
     return (
         <div>

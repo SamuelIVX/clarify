@@ -12,6 +12,12 @@ import { FlashcardDeck, CreateMode, Mood, moods } from "@/app/flashcards/types";
 import { loadDecks, saveDecks } from "@/utils/flashcardStorage";
 import ModeToggle from "./ModeToggle";
 
+/**
+ * Hosts PDF and chat deck-creation flows behind a mode toggle.
+ * @param onCreated - Called when a new deck is saved.
+ * @param onCancel - Called when the user exits create mode.
+ * @returns The create-deck panel.
+ */
 export default function CreateDeckView({ onCreated, onCancel }: {
     onCreated: (deck: FlashcardDeck) => void;
     onCancel: () => void;
