@@ -1,3 +1,7 @@
+/**
+ * Rotating Tailwind accent styles (border, icon, badge) so deck cards get a
+ * distinct color per position. Cycled by array index.
+ */
 export const deckAccentClasses = [
     { border: "border-l-indigo-400", iconBg: "bg-indigo-100", iconText: "text-indigo-600", badge: "bg-indigo-50 text-indigo-700" },
     { border: "border-l-violet-400", iconBg: "bg-violet-100", iconText: "text-violet-600", badge: "bg-violet-50 text-violet-700" },

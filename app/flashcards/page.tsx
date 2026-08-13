@@ -1,4 +1,8 @@
 'use client'
+/**
+ * Flashcards home page — list / create / edit views for flashcard decks,
+ * persisted to localStorage("flashcard_decks").
+ */
 import { useState } from "react";
 import { deckAccentClasses } from "@/app/utils/deckAccents";
 import { FlashcardDeck, View } from "./types";
@@ -9,6 +13,10 @@ import ConfirmDeleteModal from "@/components/flashcards/ConfirmDeleteModal";
 import DeckCard from "@/components/flashcards/DeckCard";
 import { BookOpen, Plus } from "lucide-react";
 
+/**
+ * Deck list management — create/edit/delete decks and switch between the
+ * list/create/edit views.
+ */
 export default function FlashcardsPage() {
   const [decks, setDecks] = useState<FlashcardDeck[]>(() => loadDecks());
   const [view, setView] = useState<View>("list");

@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * Deck creation view — toggles between PDF-upload (mood-tuned AI generation)
+ * and chat-based (conversational) creation modes.
+ */
+
 import { useState } from "react";
 import { AlertCircle, BookOpen, MessageSquare, Upload, X, FileText, Loader2 } from "lucide-react";
 import ChatDeckCreator from "./ChatDeckCreator";

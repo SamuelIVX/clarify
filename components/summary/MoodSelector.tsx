@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Mood picker — buttons for each summary mood with label + description.
+ */
+
 import { FileText } from "lucide-react";
 import type { Mood, MoodOption } from "@/app/summary/types";
 

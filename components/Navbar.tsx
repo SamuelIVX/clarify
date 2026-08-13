@@ -1,5 +1,10 @@
 'use client'
 
+/**
+ * App navbar — responsive top navigation linking the Flashcards, Summary, and
+ * Cramming sections, with a mobile hamburger menu.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, Brain, FileText, Menu, X } from "lucide-react";

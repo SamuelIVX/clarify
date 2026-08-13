@@ -1,3 +1,7 @@
+/**
+ * Renders the AI summary text, parsing **bold** spans and one-line
+ * bullet/prefixed lines into structured JSX.
+ */
 export default function RenderSummary({ summary }: { summary: string }) {
     const lines = summary.split("\n");
     const elements: React.ReactNode[] = [];

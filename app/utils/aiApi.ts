@@ -1,3 +1,7 @@
+/**
+ * Flashcard and deck domain types plus the client-side wrapper for the
+ * /api/analyze-topics route.
+ */
 export interface Flashcard {
     id: string;
     question: string;
@@ -12,6 +16,13 @@ export interface FlashcardDeck {
     createdAt: number;
 }
 
+/**
+ * Asks the server to identify weak-topic strings for a set of missed
+ * flashcards. Throws on non-OK responses so callers surface an error state.
+ * @param flashcards - The flashcards the student got wrong.
+ * @returns A list of 3-5 concise weak-topic strings.
+ * @throws {Error} If the API returns a non-2xx response.
+ */
 export async function analyzeWeakTopics(flashcards: Flashcard[]): Promise<string[]> {
     const res = await fetch('/api/analyze-topics', {
         method: 'POST',

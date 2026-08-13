@@ -1,4 +1,7 @@
 'use client'
+/**
+ * shadcn/ui navigation menu primitives (Base UI + cva variants).
+ */
 import { NavigationMenu as NavigationMenuPrimitive } from "@base-ui/react/navigation-menu"
 import type { ComponentPropsWithRef } from "react"
 import { cva } from "class-variance-authority"

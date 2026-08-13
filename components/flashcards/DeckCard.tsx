@@ -1,4 +1,8 @@
 'use client'
+/**
+ * Card representing a flashcard deck in the list view — expandable to reveal
+ * its Q&A cards, with edit/delete actions and a link into a cramming session.
+ */
 import Link from "next/link";
 import { BookOpen, ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { DeckCardProps } from "./types";

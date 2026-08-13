@@ -1,3 +1,6 @@
+/**
+ * Summary-page mood options and the labels/descriptions shown to the user.
+ */
 export type Mood = "tired" | "stressed" | "annoyed" | "curious";
 
 export type MoodOption = { value: Mood; label: string; description: string };

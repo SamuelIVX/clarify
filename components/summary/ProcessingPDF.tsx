@@ -1,3 +1,6 @@
+/**
+ * Loading indicator shown while the PDF is being extracted or summarized.
+ */
 import { Loader2 } from "lucide-react";
 
 export default function ProcessingPDF({ stage }: { stage: "extracting" | "summarizing" }) {

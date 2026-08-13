@@ -1,8 +1,20 @@
+/**
+ * POST /api/extract — extracts text from an uploaded PDF using unpdf. Runs on
+ * the Vercel server (maxDuration 60s). Rejects non-PDF uploads and scanned
+ * images that yield no text.
+ */
 import { NextResponse } from 'next/server'
 import { extractText } from 'unpdf'
 
 export const maxDuration = 60
 
+/**
+ * Handles PDF text extraction from a multipart form upload.
+ * @param {Request} req - FormData with a `pdf` File field.
+ * @returns {Promise<NextResponse>} { text: string } or an error JSON with
+ *   status 400/422/500.
+ * @throws A rejected read/parse produces a 500 with no internals exposed.
+ */
 export async function POST(req) {
   try {
     const formData = await req.formData()

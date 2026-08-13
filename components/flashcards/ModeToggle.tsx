@@ -1,3 +1,6 @@
+/**
+ * Toggle button used to switch between the PDF and chat creation modes.
+ */
 import { ModeToggleProps } from "./types"
 
 export default function ModeToggle({ mode, targetMode, onModeChange, icon }: ModeToggleProps) {

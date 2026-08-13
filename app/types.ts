@@ -1,3 +1,6 @@
+/**
+ * Landing-page feature card props (used by app/page.tsx).
+ */
 export interface FeatureCardProps {
     page: string;
     icon: React.ReactNode;

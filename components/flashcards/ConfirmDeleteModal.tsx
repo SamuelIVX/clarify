@@ -1,4 +1,7 @@
 'use client';
+/**
+ * Reusable confirmation dialog for destructive deck/card actions.
+ */
 import { useEffect, useRef } from "react";
 import { Trash2 } from "lucide-react";
 

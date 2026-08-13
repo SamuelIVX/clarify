@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+/**
+ * Root layout — sets the global font (Geist), page metadata, and the app
+ * navbar around all routes.
+ */
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";

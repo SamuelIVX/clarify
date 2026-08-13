@@ -1,4 +1,8 @@
 "use client";
+/**
+ * Summary page — upload a PDF, pick a mood, generate a mood-tuned summary,
+ * then copy or download it. Drives the extract → summarize pipeline stages.
+ */
 import { useState, type ChangeEvent } from "react";
 import { Upload, FileText, AlertCircle, Copy, Check, Download } from "lucide-react";
 import { Mood, moods } from "./types";
@@ -9,6 +13,10 @@ import ActionsSection from "@/components/summary/ActionsSection";
 import ProcessingPDF from "@/components/summary/ProcessingPDF";
 import MoodSelector from "@/components/summary/MoodSelector";
 
+/**
+ * Orchestrates the summary flow: PDF upload validation, extract → summarize
+ * API calls, and copy/download of the resulting summary.
+ */
 export default function SummaryPage() {
   const [file, setFile] = useState<File | null>(null);
   const [mood, setMood] = useState<Mood>("curious");
