@@ -102,7 +102,8 @@ export const flashcardTool = { name: 'emit_flashcards', description: '...', inpu
     required: ['question', 'answer'] } } }, required: ['flashcards'] } }
 export const topicsTool = { name: 'emit_topics', description: '...', input_schema: { type: 'object',
   properties: { topics: { type: 'array', items: { type: 'string' } } }, required: ['topics'] } }
-```
+
+```js
 
 Route helper (shared parse):
 
@@ -111,7 +112,8 @@ function readToolUse(message, toolName) {
   const block = message.content.find(b => b.type === 'tool_use' && b.name === toolName)
   return block?.input
 }
-```
+
+```js
 
 Route call shapes:
 
@@ -131,7 +133,8 @@ client.messages.create({ model: 'claude-opus-4-6', max_tokens: 2000, system: CHA
   messages: cleanMessages, tools: [flashcardTool] })
 // tool_choice NOT forced: model may chat (no cards) or produce text + one tool_use.
 // message = text blocks joined; flashcards = tool_use input or null; a present set is validated fail-closed.
-```
+
+```js
 
 Mock shape in `app/api/route.test.ts` (class stays; resolved values change):
 
@@ -143,7 +146,8 @@ messagesCreate.mockResolvedValue({
 })
 // e.g. summarize unchanged
 messagesCreate.mockResolvedValue({ content: [{ type: 'text', text: 'summary' }] })
-```
+
+```js
 
 ## Current State
 

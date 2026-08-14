@@ -15,7 +15,6 @@ import {
   MAX_MESSAGES,
   MODELS,
   emitFlashcardsTool,
-  readToolUse,
 } from '../../../lib/prompts'
 
 /**
@@ -71,10 +70,10 @@ export async function POST(req) {
     const textBlocks = response.content.filter(b => b.type === 'text')
     const message = textBlocks.map(b => b.text).join('\n').trim()
 
-    const toolInput = readToolUse(response, emitFlashcardsTool.name)
+    const toolBlock = response.content.find(b => b.type === 'tool_use' && b.name === emitFlashcardsTool.name)
     let flashcards = null
-    if (toolInput) {
-      const cards = toolInput.flashcards
+    if (toolBlock) {
+      const cards = toolBlock.input?.flashcards
       if (!Array.isArray(cards) || cards.length === 0 || !cards.every(card =>
         card && typeof card === 'object' &&
         typeof card.question === 'string' && card.question.trim().length > 0 &&
