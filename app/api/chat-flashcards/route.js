@@ -1,35 +1,22 @@
 /**
  * POST /api/chat-flashcards — conversational flashcard generation via the
  * chat-flashcards flow. Sanitizes client messages to the `user` role only
- * (blocks forged system/assistant turns), caps length/count, and parses the
- * `---FLASHCARDS---` delimiter convention. SECURITY: requires
- * ANTHROPIC_API_KEY in env; only sanitized user-role messages are forwarded,
- * up to MAX_MESSAGES.
+ * (blocks forged system/assistant turns), caps length/count, and derives the
+ * reply from Anthropic tool use: the friendly message comes from text blocks,
+ * flashcards come from an emit_flashcards tool_use block if the model produced
+ * one. SECURITY: requires ANTHROPIC_API_KEY in env; only sanitized user-role
+ * messages are forwarded, up to MAX_MESSAGES.
  */
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-
-const SYSTEM_PROMPT = `You are a flashcard generation assistant. Help users create study flashcards on any topic through natural conversation.
-
-Your flow:
-1. When the user describes a topic, you may ask ONE clarifying question (e.g. depth/level, specific focus) if needed.
-2. Otherwise, generate flashcards right away based on what the user tells you.
-3. If the user asks for changes (more cards, simpler, different focus), regenerate the full set.
-
-When generating flashcards, write a brief friendly message first, then output the cards using this exact format on a new line:
-
----FLASHCARDS---
-[{"question": "...", "answer": "..."}, ...]
-
-Rules:
-- The JSON must be a valid array on a single line immediately after the delimiter
-- Default to 8 flashcards unless the user specifies a number
-- Questions should be clear and specific
-- Answers should be accurate and concise (1-3 sentences)
-- Cover a good spread of the topic — don't cluster around one sub-topic`
-
-const ALLOWED_ROLES = new Set(['user'])
-const MAX_MESSAGES = 30
+import {
+  CHAT_SYSTEM_PROMPT,
+  ALLOWED_ROLES,
+  MAX_MESSAGES,
+  MODELS,
+  emitFlashcardsTool,
+  readToolUse,
+} from '../../../lib/prompts'
 
 /**
  * Drops any message that isn't a non-empty user-role object with string content
@@ -74,27 +61,24 @@ export async function POST(req) {
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const response = await client.messages.create({
-      model: 'claude-opus-4-6',
+      model: MODELS.opus,
       max_tokens: 2000,
-      system: SYSTEM_PROMPT,
+      system: CHAT_SYSTEM_PROMPT,
       messages: cleanMessages,
+      tools: [emitFlashcardsTool],
     })
 
-    const content = response.content[0].text
-    const delimiterIndex = content.indexOf('---FLASHCARDS---')
+    const textBlocks = response.content.filter(b => b.type === 'text')
+    const message = textBlocks.map(b => b.text).join('\n').trim()
 
-    if (delimiterIndex !== -1) {
-      const message = content.slice(0, delimiterIndex).trim()
-      const afterDelimiter = content.slice(delimiterIndex + '---FLASHCARDS---'.length).trim()
-      const jsonMatch = afterDelimiter.match(/\[[\s\S]*\]/)
+    const flashcards = readToolUse(response, emitFlashcardsTool.name)?.flashcards ?? null
+    if (Array.isArray(flashcards) && !flashcards.every(card =>
+      card && typeof card === 'object' &&
+      typeof card.question === 'string' && card.question.trim().length > 0 &&
+      typeof card.answer === 'string' && card.answer.trim().length > 0
+    )) throw new Error("AI response flashcards must have non-empty string question and answer")
 
-      if (jsonMatch) {
-        const flashcards = JSON.parse(jsonMatch[0])
-        return NextResponse.json({ message, flashcards })
-      }
-    }
-
-    return NextResponse.json({ message: content, flashcards: null })
+    return NextResponse.json({ message, flashcards })
   } catch (error) {
     console.error('[/api/chat-flashcards] request failed', {
       name: error?.name,
