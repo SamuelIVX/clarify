@@ -71,12 +71,17 @@ export async function POST(req) {
     const textBlocks = response.content.filter(b => b.type === 'text')
     const message = textBlocks.map(b => b.text).join('\n').trim()
 
-    const flashcards = readToolUse(response, emitFlashcardsTool.name)?.flashcards ?? null
-    if (Array.isArray(flashcards) && !flashcards.every(card =>
-      card && typeof card === 'object' &&
-      typeof card.question === 'string' && card.question.trim().length > 0 &&
-      typeof card.answer === 'string' && card.answer.trim().length > 0
-    )) throw new Error("AI response flashcards must have non-empty string question and answer")
+    const toolInput = readToolUse(response, emitFlashcardsTool.name)
+    let flashcards = null
+    if (toolInput) {
+      const cards = toolInput.flashcards
+      if (!Array.isArray(cards) || cards.length === 0 || !cards.every(card =>
+        card && typeof card === 'object' &&
+        typeof card.question === 'string' && card.question.trim().length > 0 &&
+        typeof card.answer === 'string' && card.answer.trim().length > 0
+      )) throw new Error("AI response flashcards must be a non-empty array of cards with non-empty string question and answer")
+      flashcards = cards
+    }
 
     return NextResponse.json({ message, flashcards })
   } catch (error) {

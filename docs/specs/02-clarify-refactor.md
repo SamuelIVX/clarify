@@ -1,12 +1,14 @@
 # Spec: clarify — Anthropic Tool-Use Conversion + Prompt Consolidation
 
 ## Objective
+
 Replace the fragile regex/JSON-array parsing in the three structured-output Claude routes
 (`/api/flashcards`, `/api/analyze-topics`, `/api/chat-flashcards`) with **Anthropic tool use**
 (`tool_choice` + `tool_use` content blocks), and consolidate all prompt/tool strings into one
 module (`lib/prompts.js`) that every AI route imports. Delete the empty root `route.ts`.
 
 ## Scope
+
 - Package: **clarify** (Next.js 16 App Router, React 19, `@anthropic-ai/sdk` ^0.116)
 - Modifies:
   - `app/api/flashcards/route.js` — tool-use contract for flashcard output
@@ -21,6 +23,7 @@ module (`lib/prompts.js`) that every AI route imports. Delete the empty root `ro
   - `cramPrompts` (dead export in `lib/prompts.js`, zero imports — not re-created in the consolidated module)
 
 ## Non-Goals
+
 - No change to `summarize` output parsing (plain text; no regex/JSON) — tool-use not required there.
 - No model ID or `max_tokens` changes (tool use raises cost; budget stays as-is).
 - No `.env` changes; no `@nuxt/utils`; `@google/generative-ai` stays package.json-only (unused).
@@ -30,6 +33,7 @@ module (`lib/prompts.js`) that every AI route imports. Delete the empty root `ro
 - No scoring/UI behavior changes; no backend persistence.
 
 ## Invariants
+
 - Fail-closed output validation stays: a model response with no usable `tool_use` block, an empty array, or malformed items MUST produce a 500 (never a partial/empty success).
 - Untrusted user/PDF content MUST remain wrapped in an isolation tag with the isolation instruction and XML-escaped before reaching the model — same as today.
 - The mocked SDK MUST remain `new Anthropic()`-compatible: `class AnthropicMock { messages = { create } }` (a `vi.fn(() => …)` default breaks `new Anthropic()` and is forbidden).
@@ -38,6 +42,7 @@ module (`lib/prompts.js`) that every AI route imports. Delete the empty root `ro
 - No test deleted or weakened; the total suite must not drop below baseline (54 passing, 7 files).
 
 ## Requirements
+
 1. WHEN `/api/flashcards` calls the model, THE SYSTEM SHALL declare an `emit_flashcards` tool
    whose `input_schema` requires `flashcards: [{ question, answer }]` and pass
    `tool_choice: { type: "tool", name: "emit_flashcards" }`.
@@ -49,8 +54,10 @@ module (`lib/prompts.js`) that every AI route imports. Delete the empty root `ro
    (500), preserving current error behavior and logging.
 5. WHEN `/api/chat-flashcards` returns, THE SYSTEM SHALL derive `message` from concatenated text
    blocks and `flashcards` from an `emit_flashcards` tool_use block if present, otherwise
-   `flashcards: null` (preserves today's delimiter-absent behavior). Validation of a present set
-   is fail-closed.
+   `flashcards: null` (preserves today's delimiter-absent behavior). A present matching `tool_use`
+   block MUST carry a non-empty array of valid cards (`{question, answer}` non-empty strings);
+   a block with a missing `flashcards` field, a non-array, an empty array, or a malformed card
+   fails closed (500).
 6. THE SYSTEM SHALL keep untrusted content wrapped in `<document>` / `<flashcards>` with the
    isolation instruction and `escapeXml` on every model call.
 7. THE SYSTEM SHALL consolidate all prompt strings and tool schemas used by the AI routes into
@@ -59,11 +66,12 @@ module (`lib/prompts.js`) that every AI route imports. Delete the empty root `ro
 8. THE SYSTEM SHALL delete the empty root `route.ts`.
 9. THE SYSTEM SHALL update `app/api/route.test.ts` so every mocked `messages.create` resolution
    uses `content: [{ type: "tool_use", name, input }]` for the three tool routes, asserts the
-   `tools` array is sent on the call, and keeps all 25 route tests + the rest of the suite passing
+   `tools` array is sent on the call, and keeps the route suite + the rest of the suite passing
    (no deletions, no weakened assertions).
 
 ## Acceptance Criteria
-- AC1 `npm run test` — PASS with ≥54 tests; all 25 route tests present and green.
+
+- AC1 `npm run test` — PASS with ≥54 tests; route suite present and green.
 - AC2 `npm run lint` — PASS.
 - AC3 `npm run build` — PASS.
 - AC4 `npx tsc --noEmit` — PASS (or only documented pre-existing errors, none in touched files).
@@ -74,6 +82,7 @@ module (`lib/prompts.js`) that every AI route imports. Delete the empty root `ro
 - AC9 `route.ts` at repo root is deleted (git rm, no remaining empty file).
 
 ## Design (required — non-trivial)
+
 Shared tool-schema/prompt module `lib/prompts.js` (currently zero-import; becomes live):
 
 ```js
@@ -137,6 +146,7 @@ messagesCreate.mockResolvedValue({ content: [{ type: 'text', text: 'summary' }] 
 ```
 
 ## Current State
+
 - `flashcards/route.js` uses `raw.match(/\[[\s\S]*\]/)` + `JSON.parse`; 7 tests. [verified]
 - `analyze-topics/route.js` uses the same regex; 7 tests. [verified]
 - `chat-flashcards/route.js` uses `---FLASHCARDS---` delimiter + regex; 4 tests. [verified]
@@ -148,11 +158,13 @@ messagesCreate.mockResolvedValue({ content: [{ type: 'text', text: 'summary' }] 
 - SDK `@anthropic-ai/sdk` ^0.116 exposes `Tool`/`tool_choice` and `ToolUseBlock { type: 'tool_use', name, input }`. [verified in messages.d.ts]
 
 ## Tests
+
 - `app/api/route.test.ts` — update 3 routes' success mock shapes to `tool_use`; keep all fail-closed cases (no tool_use / empty / malformed → 500); add `call[0].tools` assertions; keep summarize text mocks and all input-validation tests.
 - No new test files required (coverage lives in the route suite).
 - Test names keep referencing requirements via `(Rn)` convention where applicable.
 
 ## Constraints
+
 - Dependencies: none (no spec ships before this one within clarify).
 - Backward compatibility: HTTP response contracts above are unchanged; UI consumers (`CreateDeckView`, `ChatDeckCreator`, `summary/page.tsx`, `aiApi.ts`) require no edits.
 - Model/token budget unchanged. Follow `docs/specs` in-repo convention (D6/D7 of master-refactor-v3).

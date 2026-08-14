@@ -363,4 +363,43 @@ describe("/api/chat-flashcards", () => {
         }));
         expect(res.status).toBe(500);
     });
+
+    it("fails closed when the emit_flashcards tool_use block omits the flashcards field", async () => {
+        messagesCreate.mockResolvedValue({
+            content: [
+                { type: "tool_use", id: "t1", name: "emit_flashcards", input: {} },
+            ],
+        });
+
+        const res = await chatFlashcardsPOST(makeReq({
+            messages: [{ role: "user", content: "Make cards" }],
+        }));
+        expect(res.status).toBe(500);
+    });
+
+    it("fails closed when the emit_flashcards tool_use block has a non-array flashcards field", async () => {
+        messagesCreate.mockResolvedValue({
+            content: [
+                { type: "tool_use", id: "t1", name: "emit_flashcards", input: { flashcards: "nope" } },
+            ],
+        });
+
+        const res = await chatFlashcardsPOST(makeReq({
+            messages: [{ role: "user", content: "Make cards" }],
+        }));
+        expect(res.status).toBe(500);
+    });
+
+    it("fails closed on an empty flashcards array from the emit_flashcards tool", async () => {
+        messagesCreate.mockResolvedValue({
+            content: [
+                { type: "tool_use", id: "t1", name: "emit_flashcards", input: { flashcards: [] } },
+            ],
+        });
+
+        const res = await chatFlashcardsPOST(makeReq({
+            messages: [{ role: "user", content: "Make cards" }],
+        }));
+        expect(res.status).toBe(500);
+    });
 });
